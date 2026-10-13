@@ -59,17 +59,19 @@ def images(card):
 
 def save(key, card):
     art_url, full_url = images(card)
+    # Cartas de dos caras (como los roles): se usa la primera cara.
+    face = card if card.get("oracle_text") is not None or not card.get("card_faces") else card["card_faces"][0]
     entry = {
-        "name": card["name"],
-        "mana_cost": card.get("mana_cost", ""),
-        "type_line": card.get("type_line", ""),
-        "oracle_text": card.get("oracle_text", ""),
+        "name": face["name"],
+        "mana_cost": face.get("mana_cost", ""),
+        "type_line": face.get("type_line", ""),
+        "oracle_text": face.get("oracle_text", ""),
         "power": card.get("power"),
         "toughness": card.get("toughness"),
         "set_name": card.get("set_name"),
         "artist": card.get("artist"),
         "scryfall_uri": card.get("scryfall_uri"),
-        "es": spanish(card["name"]),
+        "es": spanish(card["name"]) if "Token" not in card.get("type_line", "") else None,
         "rulings": [
             {"date": r["published_at"], "text": r["comment"]}
             for r in get(card["rulings_uri"]).get("data", [])
