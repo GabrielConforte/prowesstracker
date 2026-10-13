@@ -58,6 +58,7 @@
   .stats-row { display: flex; gap: 14px; color: var(--muted); font-size: 0.85rem; }
   .stats-row b { color: var(--text); }
   .stats-row { align-items: center; }
+  .stats-row > span { white-space: nowrap; }
   .btn-sound { margin-left: auto; background: var(--panel-2); padding: 3px 8px; font-size: 0.9rem; line-height: 1.2; }
   .life { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   .life-box { background: var(--panel); border-radius: 12px; padding: 6px 8px; box-shadow: inset 0 0 0 1px var(--life-c); }
@@ -122,8 +123,10 @@
   }
   .life-row button { background: var(--panel-2); padding: 8px 0; font-size: 0.95rem; font-weight: 700; }
   .btn-attack { width: 100%; background: #7f1d1d; padding: 12px; font-weight: 700; margin-bottom: 12px; }
-  .btn-reset { width: 100%; background: var(--panel); color: var(--muted); padding: 12px; margin-top: 22px; }
-  .btn-reset.armed { background: var(--red); color: #fff; }
+  .btn-reset { margin-left: auto; }
+  .btn-reset + .btn-sound { margin-left: 0; }
+  .btn-reset.armed { background: var(--red); animation: armed 0.6s ease-in-out infinite alternate; }
+  @keyframes armed { to { transform: rotate(-180deg) scale(1.15); } }
   .actions { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 10px; }
   .btn-spell { background: var(--izzet); padding: 12px; font-weight: 700; }
   .btn-undo { background: var(--panel-2); padding: 12px 14px; }
@@ -197,7 +200,7 @@
   /* Celular: todo más compacto, criaturas de a dos por fila */
   @media (max-width: 600px) {
     header { padding: 8px 12px; }
-    .stats-row { gap: 10px; font-size: 0.78rem; }
+    .stats-row { gap: 8px; font-size: 0.76rem; }
     .life { margin-top: 6px; gap: 6px; }
     .life-box { padding: 4px 6px; }
     .life-label { font-size: 0.7rem; }
@@ -233,7 +236,6 @@
     .pump button { padding: 7px 0; font-size: 0.85rem; }
     .toggles { gap: 4px; }
     .toggle { padding: 7px 2px; font-size: 0.72rem; }
-    .btn-reset { margin-top: 16px; }
   }
 
   /* Turnos, tapeo e historial */
@@ -361,9 +363,10 @@
 
 <header>
   <div class="stats-row">
-    <span>⏳ Turno <b id="turnCount">1</b> · <b id="turnSide" class="side-me">Tu turno</b></span>
+    <span>⏳ T<b id="turnCount">1</b> · <b id="turnSide" class="side-me">Tu turno</b></span>
     <span>📜 Hechizos: <b id="spellCount">0</b></span>
     <span>💥 Daño: <b id="totalPower">0</b></span>
+    <button class="btn-sound btn-reset" id="newGame" aria-label="Nueva partida" title="Nueva partida">🔄</button>
     <button class="btn-sound" id="sound" aria-label="Sonido">🔊</button>
   </div>
   <div class="life">
@@ -402,7 +405,6 @@
   <h2 class="history-title">📖 Historial</h2>
   <div class="history" id="history"></div>
 
-  <button class="btn-reset" id="newGame">🔄 Nueva partida</button>
   <p class="credit">Imágenes de cartas: <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Tocá la imagen de una criatura para ver la carta.</p>
 </main>
 
@@ -860,7 +862,7 @@ function newGame() {
   const btn = document.getElementById("newGame");
   if (!btn.classList.contains("armed")) {
     btn.classList.add("armed");
-    btn.textContent = "¿Seguro? Tocá de nuevo para reiniciar";
+    toast("🔄 Tocá de nuevo para empezar una partida nueva");
     resetTimer = setTimeout(disarmReset, 3000);
     return;
   }
@@ -878,7 +880,6 @@ function disarmReset() {
   clearTimeout(resetTimer);
   const btn = document.getElementById("newGame");
   btn.classList.remove("armed");
-  btn.textContent = "🔄 Nueva partida";
 }
 
 // Fin de tu turno → turno rival. Fin del turno rival → tu turno siguiente (enderezás todo).
