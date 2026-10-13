@@ -678,7 +678,7 @@ function castSpell() {
   });
   toast(`⚡ Hechizo #${state.spells}: prowess a todas`);
   burst(document.getElementById("castSpell"), ["⚡", "🔥", "✨", "⚡"], 10, 90);
-  sfx.zap(state.creatures.filter(c => CREATURES[c.type].trigger).length);
+  sfx.zap(state.creatures.filter(c => CREATURES[c.type].trigger).length, state.spells - 1);
   state.creatures.forEach(c => celebrateTrigger(c));
 }
 
@@ -701,7 +701,7 @@ function prowessOne(id) {
     if (c) applyTrigger(c);
   });
   const c = state.creatures.find(x => x.id === id);
-  if (c) { celebrateTrigger(c); sfx.zap(CREATURES[c.type].trigger ? 1 : 0); }
+  if (c) { celebrateTrigger(c); sfx.zap(CREATURES[c.type].trigger ? 1 : 0, c.triggers - 1); }
 }
 
 function pump(id, stat, amount) {
@@ -1086,15 +1086,17 @@ const sfx = {
     tone({ freq: 500, to: 120, type: "sine", dur: 0.3, vol: 0.25 });
   },
   // Prowess: zap eléctrico; más criaturas, más chispas. 0 = DRC sola ("¿eh?").
-  zap(n = 1) {
+  // step = cuántas veces se activó antes en el turno: cada vez suena 2 semitonos más agudo.
+  zap(n = 1, step = 0) {
+    const up = Math.pow(2, (Math.min(step, 12) * 2) / 12);
     if (n === 0) {
       tone({ freq: 330, to: 300, type: "square", dur: 0.12, vol: 0.12 });
       tone({ freq: 300, to: 420, type: "square", dur: 0.18, vol: 0.12, delay: 0.14 });
       return;
     }
-    tone({ freq: 1800, to: 200, type: "sawtooth", dur: 0.18, vol: 0.18 });
+    tone({ freq: 1800 * up, to: 200 * up, type: "sawtooth", dur: 0.18, vol: 0.18 });
     for (let i = 0; i < Math.min(n, 4); i++) {
-      tone({ freq: 600 + i * 200, to: 1600 + i * 300, type: "square", dur: 0.09, vol: 0.08, delay: 0.08 + i * 0.06 });
+      tone({ freq: (600 + i * 200) * up, to: (1600 + i * 300) * up, type: "square", dur: 0.09, vol: 0.08, delay: 0.08 + i * 0.06 });
     }
   },
   // Pump: "pop" más agudo cuanto más grande.
