@@ -20,7 +20,7 @@ Abrí `index.html` en el navegador (ideal en el celular). No necesita instalaci�
 - **Role token** (Monstrous Rage): Monster role, +1/+1 y arrolla. Permanente.
 - **Equipar Cori-Steel**: +1/+1, arrolla y prisa. Permanente.
 - **Fin de turno**: suma un turno al contador y limpia prowess, pumps y el contador de hechizos (role, equipo y delirium quedan).
-- **Vidas**: contador de vida tuyo y del rival (−5, −1, +1, +5), arranca en 20.
+- **Vidas**: contador de vida tuyo y del rival (−1 y +1), arranca en 20.
 - **💥 Pegar con todo**: resta al rival la fuerza total de tus criaturas.
 - **🔄 Nueva partida**: reinicia vidas y campo (tocá dos veces para confirmar).
 - **↶**: deshacer.

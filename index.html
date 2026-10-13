@@ -64,10 +64,10 @@
   .life-box.me { --life-c: #166534; }
   .life-box.opp { --life-c: #7f1d1d; }
   .life-label { font-size: 0.75rem; color: var(--muted); text-align: center; }
-  .life-row { display: grid; grid-template-columns: 1fr 1fr auto 1fr 1fr; gap: 3px; align-items: center; }
-  .life-row b { font-size: 1.6rem; font-variant-numeric: tabular-nums; text-align: center; min-width: 2.2ch; }
+  .life-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 3px; align-items: center; }
+  .life-row b { font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; text-align: center; min-width: 2.2ch; }
   .life-row b.low { color: var(--red); }
-  .life-row button { background: var(--panel-2); padding: 7px 0; font-size: 0.8rem; font-weight: 700; }
+  .life-row button { background: var(--panel-2); padding: 8px 0; font-size: 0.95rem; font-weight: 700; }
   .btn-attack { width: 100%; background: #7f1d1d; padding: 12px; font-weight: 700; margin-bottom: 12px; }
   .btn-reset { width: 100%; background: var(--panel); color: var(--muted); padding: 12px; margin-top: 22px; }
   .btn-reset.armed { background: var(--red); color: #fff; }
@@ -151,8 +151,8 @@
     .life { margin-top: 6px; gap: 6px; }
     .life-box { padding: 4px 6px; }
     .life-label { font-size: 0.7rem; }
-    .life-row b { font-size: 1.35rem; }
-    .life-row button { padding: 6px 0; font-size: 0.75rem; }
+    .life-row b { font-size: 1.75rem; }
+    .life-row button { padding: 7px 0; font-size: 0.9rem; }
     .actions { margin-top: 6px; gap: 6px; }
     .btn-spell, .btn-undo, .btn-eot { padding: 10px; font-size: 0.9rem; }
 
@@ -211,21 +211,17 @@
     <div class="life-box me">
       <div class="life-label">❤️ Yo</div>
       <div class="life-row">
-        <button data-life="me" data-d="-5">−5</button>
         <button data-life="me" data-d="-1">−1</button>
         <b id="lifeMe">20</b>
         <button data-life="me" data-d="1">+1</button>
-        <button data-life="me" data-d="5">+5</button>
       </div>
     </div>
     <div class="life-box opp">
       <div class="life-label">💀 Rival</div>
       <div class="life-row">
-        <button data-life="opp" data-d="-5">−5</button>
         <button data-life="opp" data-d="-1">−1</button>
         <b id="lifeOpp">20</b>
         <button data-life="opp" data-d="1">+1</button>
-        <button data-life="opp" data-d="5">+5</button>
       </div>
     </div>
   </div>
