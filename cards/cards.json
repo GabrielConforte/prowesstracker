@@ -207,10 +207,10 @@
     "full": "cards/monk-full.jpg"
   },
   "role": {
-    "name": "Monster // Sorcerer",
+    "name": "Monster",
     "mana_cost": "",
-    "type_line": "Token Enchantment — Aura Role // Token Enchantment — Aura Role",
-    "oracle_text": "",
+    "type_line": "Token Enchantment — Aura Role",
+    "oracle_text": "Enchant creature\nEnchanted creature gets +1/+1 and has trample.",
     "power": null,
     "toughness": null,
     "set_name": "Wilds of Eldraine Tokens",
