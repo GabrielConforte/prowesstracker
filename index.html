@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161c">
+<title>Prowess Tracker</title>
+<style>
+  :root {
+    --bg: #14161c;
+    --panel: #1d2029;
+    --panel-2: #262a36;
+    --text: #eef0f5;
+    --muted: #9aa1b2;
+    --blue: #3b82f6;
+    --red: #ef4444;
+    --izzet: linear-gradient(135deg, #2563eb, #dc2626);
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:active { transform: scale(0.96); }
+  button:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(20, 22, 28, 0.96);
+    backdrop-filter: blur(6px);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--panel-2);
+  }
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h1 { font-size: 1.15rem; margin: 0; }
+  .stats-row { display: flex; gap: 14px; color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+  .stats-row b { color: var(--text); }
+  .actions { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 10px; }
+  .btn-spell { background: var(--izzet); padding: 12px; font-weight: 700; }
+  .btn-undo { background: var(--panel-2); padding: 12px 14px; }
+  .btn-eot { background: var(--amber); color: #1a1205; padding: 12px 14px; font-weight: 700; }
+
+  main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+  h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
+
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin-bottom: 22px; }
+  .roster-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel); border-radius: var(--radius); padding: 10px 12px;
+  }
+  .roster-item .name { flex: 1; min-width: 0; }
+  .roster-item .name small { display: block; color: var(--muted); font-size: 0.75rem; }
+  .roster-item .count { min-width: 1.5em; text-align: center; font-weight: 700; }
+  .round { width: 38px; height: 38px; border-radius: 50%; background: var(--panel-2); font-size: 1.3rem; line-height: 1; }
+  .round.plus { background: var(--blue); }
+
+  .field { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 30px 10px; background: var(--panel); border-radius: var(--radius); }
+
+  .card {
+    position: relative;
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: 12px;
+    border-top: 4px solid var(--accent, var(--blue));
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .card .remove {
+    position: absolute; top: 8px; right: 8px;
+    width: 30px; height: 30px; background: var(--panel-2); color: var(--muted);
+  }
+  .pt { text-align: center; font-size: 2.6rem; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
+  .pt .boosted { color: var(--green); }
+  .card-name { text-align: center; font-weight: 600; }
+  .keywords { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; min-height: 22px; }
+  .kw { font-size: 0.72rem; background: var(--panel-2); border-radius: 999px; padding: 3px 8px; color: var(--muted); }
+  .kw.on { background: #1e3a2a; color: #86efac; }
+  .breakdown { text-align: center; font-size: 0.75rem; color: var(--muted); min-height: 1em; }
+
+  .btn-prowess { background: var(--izzet); padding: 14px; font-weight: 800; font-size: 1.05rem; }
+  .prowess-count { font-weight: 400; opacity: 0.85; font-size: 0.85rem; }
+
+  .pump { display: grid; grid-template-columns: auto 1fr 1fr 1fr; gap: 6px; align-items: center; }
+  .pump span { font-size: 0.75rem; color: var(--muted); width: 32px; }
+  .pump button { background: var(--panel-2); padding: 9px 0; font-weight: 700; }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle { background: var(--panel-2); padding: 9px 6px; font-size: 0.8rem; color: var(--muted); }
+  .toggle.on { background: #3b2a0a; color: #fcd34d; box-shadow: inset 0 0 0 1px #b45309; }
+  .toggle.full { grid-column: 1 / -1; }
+  .toggle.delirium.on { background: #2e1065; color: #d8b4fe; box-shadow: inset 0 0 0 1px #7c3aed; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    background: #000c; padding: 10px 16px; border-radius: 999px; font-size: 0.9rem;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <h1>Prowess Tracker</h1>
+  </div>
+  <div class="stats-row">
+    <span>Hechizos este turno: <b id="spellCount">0</b></span>
+    <span>Daño total: <b id="totalPower">0</b></span>
+  </div>
+  <div class="actions">
+    <button class="btn-spell" id="castSpell" title="Dispara el prowess de todas las criaturas">⚡ Hechizo no-criatura</button>
+    <button class="btn-undo" id="undo" title="Deshacer">↶</button>
+    <button class="btn-eot" id="endTurn">Fin de turno</button>
+  </div>
+</header>
+
+<main>
+  <h2>Criaturas</h2>
+  <div class="roster" id="roster"></div>
+
+  <h2>Campo</h2>
+  <div class="field" id="field"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Datos de las criaturas del mazo.
+// trigger: lo que suma cada vez que se lanza un hechizo no-criatura (null = no tiene).
+const CREATURES = {
+  swiftspear: {
+    name: "Monastery Swiftspear",
+    power: 1, toughness: 2,
+    keywords: ["Prisa"],
+    trigger: { power: 1, toughness: 1 },
+    accent: "#ef4444",
+  },
+  slickshot: {
+    name: "Slickshot Show-Off",
+    power: 1, toughness: 2,
+    keywords: ["Vuela", "Prisa"],
+    trigger: { power: 2, toughness: 0 },
+    accent: "#f97316",
+  },
+  drc: {
+    name: "Dragon's Rage Channeler",
+    power: 1, toughness: 1,
+    keywords: [],
+    trigger: null,
+    accent: "#a855f7",
+  },
+  monk: {
+    name: "Monk token",
+    subtitle: "Ficha 1/1",
+    power: 1, toughness: 1,
+    keywords: [],
+    trigger: { power: 1, toughness: 1 },
+    accent: "#e5e7eb",
+  },
+};
+
+// Monster role (Monstrous Rage): +1/+1 y arrolla. Permanente.
+const ROLE = { power: 1, toughness: 1 };
+// Cori-Steel Cutter: +1/+1, arrolla y prisa. Permanente.
+const CUTTER = { power: 1, toughness: 1 };
+// Delirium: DRC pasa a ser 3/3 con vuelo.
+const DELIRIUM = { power: 2, toughness: 2 };
+
+const STORAGE_KEY = "prowess-tracker-state-v1";
+const MAX_UNDO = 50;
+
+let state = loadState();
+let history = [];
+let nextId = state.nextId || 1;
+
+function freshState() {
+  return { creatures: [], spells: 0, delirium: false, nextId: 1 };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.creatures)) return parsed;
+    }
+  } catch (e) { /* sin storage: arrancamos de cero */ }
+  return freshState();
+}
+
+function saveState() {
+  state.nextId = nextId;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignorar */ }
+}
+
+// Todas las modificaciones pasan por acá para poder deshacer.
+function act(mutator) {
+  history.push(JSON.stringify(state));
+  if (history.length > MAX_UNDO) history.shift();
+  mutator();
+  saveState();
+  render();
+}
+
+function undo() {
+  if (!history.length) return;
+  state = JSON.parse(history.pop());
+  nextId = Math.max(nextId, state.nextId || 1);
+  saveState();
+  render();
+  toast("Deshecho");
+}
+
+function newCreature(type) {
+  return {
+    id: nextId++,
+    type,
+    prowessP: 0, prowessT: 0, // bonus de prowess hasta fin de turno
+    triggers: 0,
+    pumpP: 0, pumpT: 0,       // bonus manuales (+1/+2/+3) hasta fin de turno
+    role: false,              // Monster role (permanente)
+    cutter: false,            // Cori-Steel Cutter equipada (permanente)
+  };
+}
+
+function stats(c) {
+  const def = CREATURES[c.type];
+  let p = def.power, t = def.toughness;
+  const kw = [...def.keywords];
+  if (c.type === "drc" && state.delirium) {
+    p += DELIRIUM.power; t += DELIRIUM.toughness;
+    if (!kw.includes("Vuela")) kw.push("Vuela");
+  }
+  p += c.prowessP + c.pumpP;
+  t += c.prowessT + c.pumpT;
+  if (c.role) { p += ROLE.power; t += ROLE.toughness; }
+  if (c.cutter) { p += CUTTER.power; t += CUTTER.toughness; }
+  if (c.role || c.cutter) kw.push("Arrolla");
+  if (c.cutter && !kw.includes("Prisa")) kw.push("Prisa");
+  return { p, t, kw: [...new Set(kw)] };
+}
+
+// --- Acciones ---
+
+function addCreature(type) {
+  act(() => state.creatures.push(newCreature(type)));
+}
+
+function removeOne(type) {
+  const idx = state.creatures.map(c => c.type).lastIndexOf(type);
+  if (idx === -1) return;
+  act(() => state.creatures.splice(idx, 1));
+}
+
+function removeById(id) {
+  act(() => { state.creatures = state.creatures.filter(c => c.id !== id); });
+}
+
+function applyTrigger(c) {
+  const trig = CREATURES[c.type].trigger;
+  if (!trig) return;
+  c.prowessP += trig.power;
+  c.prowessT += trig.toughness;
+  c.triggers += 1;
+}
+
+function castSpell() {
+  act(() => {
+    state.spells += 1;
+    state.creatures.forEach(applyTrigger);
+  });
+  toast(`Hechizo #${state.spells}: prowess a todas`);
+}
+
+function prowessOne(id) {
+  act(() => {
+    const c = state.creatures.find(x => x.id === id);
+    if (c) applyTrigger(c);
+  });
+}
+
+function pump(id, stat, amount) {
+  act(() => {
+    const c = state.creatures.find(x => x.id === id);
+    if (!c) return;
+    if (stat === "p") c.pumpP += amount; else c.pumpT += amount;
+  });
+}
+
+function toggle(id, key) {
+  act(() => {
+    const c = state.creatures.find(x => x.id === id);
+    if (c) c[key] = !c[key];
+  });
+}
+
+function toggleDelirium() {
+  act(() => { state.delirium = !state.delirium; });
+}
+
+function endTurn() {
+  act(() => {
+    state.spells = 0;
+    state.creatures.forEach(c => {
+      c.prowessP = c.prowessT = 0;
+      c.pumpP = c.pumpT = 0;
+      c.triggers = 0;
+    });
+  });
+  toast("Fin de turno: bonus temporales limpiados");
+}
+
+// --- Render ---
+
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k === "onclick") node.addEventListener("click", v);
+    else if (k === "html") node.innerHTML = v;
+    else if (k === "style") node.style.cssText = v;
+    else if (v === true) node.setAttribute(k, "");
+    else if (v !== false && v != null) node.setAttribute(k, v);
+  }
+  for (const ch of [].concat(children)) {
+    if (ch == null) continue;
+    node.append(ch.nodeType ? ch : document.createTextNode(ch));
+  }
+  return node;
+}
+
+function signed(n) { return (n >= 0 ? "+" : "") + n; }
+
+function renderRoster() {
+  const roster = document.getElementById("roster");
+  roster.replaceChildren(...Object.entries(CREATURES).map(([type, def]) => {
+    const count = state.creatures.filter(c => c.type === type).length;
+    const sub = def.subtitle || `${def.power}/${def.toughness}`;
+    return el("div", { class: "roster-item" }, [
+      el("div", { class: "name" }, [def.name, el("small", {}, sub)]),
+      el("button", { class: "round", onclick: () => removeOne(type), disabled: count === 0, "aria-label": "Quitar" }, "−"),
+      el("span", { class: "count" }, String(count)),
+      el("button", { class: "round plus", onclick: () => addCreature(type), "aria-label": "Agregar" }, "+"),
+    ]);
+  }));
+}
+
+function renderCard(c) {
+  const def = CREATURES[c.type];
+  const s = stats(c);
+  const boostedP = s.p > def.power;
+  const boostedT = s.t > def.toughness;
+
+  const parts = [];
+  if (c.type === "drc" && state.delirium) parts.push("delirium +2/+2");
+  if (c.prowessP || c.prowessT) parts.push(`prowess ${signed(c.prowessP)}/${signed(c.prowessT)}`);
+  if (c.pumpP || c.pumpT) parts.push(`pump ${signed(c.pumpP)}/${signed(c.pumpT)}`);
+  if (c.role) parts.push("role +1/+1");
+  if (c.cutter) parts.push("cutter +1/+1");
+
+  const middle = def.trigger
+    ? el("button", { class: "btn-prowess", onclick: () => prowessOne(c.id) }, [
+        `Prowess ${signed(def.trigger.power)}/${signed(def.trigger.toughness)} `,
+        c.triggers ? el("span", { class: "prowess-count" }, `(×${c.triggers})`) : null,
+      ])
+    : el("button", { class: "toggle full delirium" + (state.delirium ? " on" : ""), onclick: toggleDelirium },
+        state.delirium ? "Delirium ACTIVO (3/3 vuela)" : "Activar delirium");
+
+  const pumpRow = (label, stat) => el("div", { class: "pump" }, [
+    el("span", {}, label),
+    ...[3, 2, 1].map(n => el("button", { onclick: () => pump(c.id, stat, n) }, `+${n}`)),
+  ]);
+
+  return el("div", { class: "card", style: `--accent:${def.accent}` }, [
+    el("button", { class: "remove", onclick: () => removeById(c.id), "aria-label": "Sacar del campo" }, "×"),
+    el("div", { class: "pt" }, [
+      el("span", { class: boostedP ? "boosted" : "" }, String(s.p)),
+      "/",
+      el("span", { class: boostedT ? "boosted" : "" }, String(s.t)),
+    ]),
+    el("div", { class: "card-name" }, def.name),
+    el("div", { class: "keywords" }, s.kw.map(k => el("span", { class: "kw" + ((k === "Arrolla" || (k === "Prisa" && c.cutter) || (k === "Vuela" && c.type === "drc")) ? " on" : "") }, k))),
+    el("div", { class: "breakdown" }, parts.join(" · ")),
+    middle,
+    pumpRow("Fue", "p"),
+    pumpRow("Res", "t"),
+    el("div", { class: "toggles" }, [
+      el("button", { class: "toggle" + (c.role ? " on" : ""), onclick: () => toggle(c.id, "role") },
+        c.role ? "✓ Monster role" : "+ Role token"),
+      el("button", { class: "toggle" + (c.cutter ? " on" : ""), onclick: () => toggle(c.id, "cutter") },
+        c.cutter ? "✓ Cori-Steel" : "Equipar Cori-Steel"),
+    ]),
+  ]);
+}
+
+function render() {
+  renderRoster();
+  const field = document.getElementById("field");
+  if (!state.creatures.length) {
+    field.replaceChildren(el("div", { class: "empty" }, "No hay criaturas en el campo. Agregalas con el +."));
+  } else {
+    field.replaceChildren(...state.creatures.map(renderCard));
+  }
+  document.getElementById("spellCount").textContent = state.spells;
+  document.getElementById("totalPower").textContent =
+    state.creatures.reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
+  document.getElementById("undo").disabled = history.length === 0;
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+document.getElementById("castSpell").addEventListener("click", castSpell);
+document.getElementById("undo").addEventListener("click", undo);
+document.getElementById("endTurn").addEventListener("click", endTurn);
+
+render();
+</script>
+</body>
+</html>
