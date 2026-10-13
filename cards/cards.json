@@ -1,0 +1,224 @@
+{
+  "swiftspear": {
+    "name": "Monastery Swiftspear",
+    "mana_cost": "{R}",
+    "type_line": "Creature — Human Monk",
+    "oracle_text": "Haste\nProwess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)",
+    "power": "1",
+    "toughness": "2",
+    "set_name": "The Brothers' War",
+    "artist": "Gabor Szikszai",
+    "scryfall_uri": "https://scryfall.com/card/bro/144/monastery-swiftspear?utm_source=api",
+    "es": {
+      "name": "Lanzaveloz del monasterio",
+      "type_line": "Criatura — Monje humano",
+      "text": "Prisa.\nDestreza. (Siempre que lances un hechizo que no sea de criatura, esta criatura obtiene +1/+1 hasta el final del turno.)"
+    },
+    "rulings": [
+      {
+        "date": "2021-03-19",
+        "text": "An ability that triggers when a player casts a spell resolves before the spell that caused it to trigger. It resolves even if that spell is countered."
+      },
+      {
+        "date": "2014-09-20",
+        "text": "Any spell you cast that doesn't have the type creature will cause prowess to trigger. If a spell has multiple types, and one of those types is creature (such as an artifact creature), casting it won't cause prowess to trigger. Playing a land also won't cause prowess to trigger."
+      },
+      {
+        "date": "2014-09-20",
+        "text": "Prowess goes on the stack on top of the spell that caused it to trigger. It will resolve before that spell."
+      },
+      {
+        "date": "2014-09-20",
+        "text": "Once it triggers, prowess isn't connected to the spell that caused it to trigger. If that spell is countered, prowess will still resolve."
+      }
+    ],
+    "art": "cards/swiftspear-art.jpg",
+    "full": "cards/swiftspear-full.jpg"
+  },
+  "slickshot": {
+    "name": "Slickshot Show-Off",
+    "mana_cost": "{1}{R}",
+    "type_line": "Creature — Bird Wizard",
+    "oracle_text": "Flying, haste\nWhenever you cast a noncreature spell, this creature gets +2/+0 until end of turn.\nPlot {1}{R} (You may pay {1}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+    "power": "1",
+    "toughness": "2",
+    "set_name": "Outlaws of Thunder Junction",
+    "artist": "Augusto Quirino",
+    "scryfall_uri": "https://scryfall.com/card/otj/146/slickshot-show-off?utm_source=api",
+    "es": {
+      "name": "Creído de los Tirográcil",
+      "type_line": "Criatura — Hechicero ave",
+      "text": "Vuela, prisa.\nSiempre que lances un hechizo que no sea criatura, el Creído de los Tirográcil obtiene +2/+0 hasta el final del turno.\nTramar {1}{R}. (Puedes pagar {1}{R} y exiliar esta carta de tu mano. Lánzala como un conjuro en un turno posterior sin pagar su coste de maná. Activa la habilidad de tramar solo como un conjuro.)"
+    },
+    "rulings": [
+      {
+        "date": "2024-04-12",
+        "text": "Plot abilities are written “Plot [cost],” which means “Any time you have priority during your main phase while the stack is empty, you may pay [cost] and exile this card from your hand. It becomes plotted.”"
+      },
+      {
+        "date": "2024-04-12",
+        "text": "Exiling a card using its plot ability is a special action. Once you announce you’re taking that action, no other player can respond by trying to remove that card from your hand."
+      },
+      {
+        "date": "2024-04-12",
+        "text": "You can’t cast a plotted card on the same turn it became plotted. On any future turn, you may cast that card from exile without paying its mana cost during your main phase while the stack is empty."
+      },
+      {
+        "date": "2024-04-12",
+        "text": "If you’re casting a plotted card from exile without paying its mana cost, you can’t choose to cast it for any other alternative costs. You can, however, pay additional costs, such as kicker costs. If the plotted card has any mandatory additional costs, those must still be paid to cast the spell."
+      },
+      {
+        "date": "2024-04-12",
+        "text": "If a plotted card has {X} in its mana cost, you must choose 0 as the value of X when casting it without paying its mana cost."
+      }
+    ],
+    "art": "cards/slickshot-art.jpg",
+    "full": "cards/slickshot-full.jpg"
+  },
+  "drc": {
+    "name": "Dragon's Rage Channeler",
+    "mana_cost": "{R}",
+    "type_line": "Creature — Human Shaman",
+    "oracle_text": "Whenever you cast a noncreature spell, surveil 1. (Look at the top card of your library. You may put that card into your graveyard.)\nDelirium — As long as there are four or more card types among cards in your graveyard, this creature gets +2/+2, has flying, and attacks each combat if able.",
+    "power": "1",
+    "toughness": "1",
+    "set_name": "Modern Horizons 2",
+    "artist": "Martina Fačková",
+    "scryfall_uri": "https://scryfall.com/card/mh2/121/dragons-rage-channeler?utm_source=api",
+    "es": {
+      "name": "Canalizadora de la ira del dragón",
+      "type_line": "Criatura — Chamán humano",
+      "text": "Siempre que lances un hechizo que no sea de criatura, escruta 1. (Mira la primera carta de tu biblioteca. Puedes poner esa carta en tu cementerio.)\nDelirio — Mientras entre las cartas en tu cementerio haya cuatro o más tipos de cartas, la Canalizadora de la ira del dragón obtiene +2/+2, tiene la habilidad de volar y ataca cada combate si puede."
+    },
+    "rulings": [
+      {
+        "date": "2021-06-18",
+        "text": "The card types that can appear in a graveyard are artifact, battle, creature, enchantment, instant, kindred, land, planeswalker, and sorcery. Legendary, basic, and snow are supertypes, not card types; Human and Shaman are subtypes, not card types."
+      },
+      {
+        "date": "2021-06-18",
+        "text": "Because damage remains marked on a creature until the cleanup step or an effect removes that damage, nonlethal damage dealt to Dragon's Rage Channeler may become lethal if the number of card types found in your graveyard drops below four."
+      }
+    ],
+    "art": "cards/drc-art.jpg",
+    "full": "cards/drc-full.jpg"
+  },
+  "cutter": {
+    "name": "Cori-Steel Cutter",
+    "mana_cost": "{1}{R}",
+    "type_line": "Artifact — Equipment",
+    "oracle_text": "Equipped creature gets +1/+1 and has trample and haste.\nFlurry — Whenever you cast your second spell each turn, create a 1/1 white Monk creature token with prowess. You may attach this Equipment to it. (Whenever you cast a noncreature spell, the token gets +1/+1 until end of turn.)\nEquip {1}{R}",
+    "power": null,
+    "toughness": null,
+    "set_name": "Tarkir: Dragonstorm",
+    "artist": "Xabi Gaztelua",
+    "scryfall_uri": "https://scryfall.com/card/tdm/103/cori-steel-cutter?utm_source=api",
+    "es": {
+      "name": "Cuchillo de coriacero",
+      "type_line": "Artefacto — Equipo",
+      "text": "La criatura equipada obtiene +1/+1 y tiene las habilidades de arrollar y prisa.\nRáfaga — Siempre que lances tu segundo hechizo cada turno, crea una ficha de criatura Monje blanca 1/1 con la habilidad de destreza. Puedes anexarle este Equipo. (Siempre que lances un hechizo que no sea criatura, la ficha obtiene +1/+1 hasta el final del turno.)\nEquipar {1}{R}."
+    },
+    "rulings": [
+      {
+        "date": "2025-04-04",
+        "text": "The Monk token that you create enters the battlefield as a 1/1 creature. Any abilities that trigger when a creature with a certain power enters the battlefield will see the token enter as a 1/1 creature. Static abilities that affect the Monk’s power and toughness may change this."
+      },
+      {
+        "date": "2025-04-04",
+        "text": "No player may take any actions between the time you create the Monk token and the time you choose whether to attach Cori-Steel Cutter to it."
+      },
+      {
+        "date": "2025-04-04",
+        "text": "If the triggered ability causes two or more Monks to be created (due to an effect such as that of Doubling Season), you may choose to attach Cori-Steel Cutter to one of them."
+      },
+      {
+        "date": "2025-04-04",
+        "text": "Spells that were cast before a permanent with flurry count. If that permanent was the first spell you cast that turn, the next spell you cast that turn is your second spell."
+      }
+    ],
+    "art": "cards/cutter-art.jpg",
+    "full": "cards/cutter-full.jpg"
+  },
+  "rage": {
+    "name": "Monstrous Rage",
+    "mana_cost": "{R}",
+    "type_line": "Instant",
+    "oracle_text": "Target creature gets +2/+0 until end of turn. Create a Monster Role token attached to it. (If you control another Role on it, put that one into the graveyard. Enchanted creature gets +1/+1 and has trample.)",
+    "power": null,
+    "toughness": null,
+    "set_name": "Wilds of Eldraine",
+    "artist": "Borja Pindado",
+    "scryfall_uri": "https://scryfall.com/card/woe/142/monstrous-rage?utm_source=api",
+    "es": {
+      "name": "Furia monstruosa",
+      "type_line": null,
+      "text": "La criatura objetivo obtiene +2/+0 hasta el final del turno. Crea una ficha de Papel de Monstruo anexada a ella. (Si controlas otro Papel sobre ella, pon ese en el cementerio. La criatura encantada obtiene +1/+1 y tiene la habilidad de arrollar.)"
+    },
+    "rulings": [
+      {
+        "date": "2023-09-01",
+        "text": "In rare cases, a spell or ability might attempt to create a Role token enchanting a permanent that it can't legally enchant (because of an ability like protection from enchantments). In such cases, the Role token isn't created."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "A permanent can have multiple Roles attached to it if each one is controlled by a different player."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "Hexproof and shroud won't prevent a Role from becoming attached to a permanent if the ability creating that Role attached to that permanent doesn't target it."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "Roles are colorless enchantment tokens. Each one has the Aura and Role subtypes and the enchant creature ability."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "If two or more Roles controlled by the same player become attached to a permanent at the same time (perhaps due to an effect such as that of Doubling Season), that player chooses which one to keep and which are put into their owners' graveyards."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "If a permanent has more than one Role attached to it controlled by the same player, each of those Roles except the one with the most recent timestamp is put into its owner's graveyard. This is a state-based action."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "Some spells and abilities that create Role tokens require targets. If each target chosen is an illegal target as that spell or ability tries to resolve, it won't resolve. The Role token won't be created."
+      },
+      {
+        "date": "2023-09-01",
+        "text": "Cards in the Wilds of Eldraine main set create six different Role tokens: Cursed, Monster, Royal, Sorcerer, Wicked, and Young Hero. A seventh Role token, Virtuous, is created by Ellivere of the Wild Court, the commander of the \"Virtue and Valor\" Commander Deck."
+      }
+    ],
+    "art": "cards/rage-art.jpg",
+    "full": "cards/rage-full.jpg"
+  },
+  "monk": {
+    "name": "Monk",
+    "mana_cost": "",
+    "type_line": "Token Creature — Monk",
+    "oracle_text": "Prowess",
+    "power": "1",
+    "toughness": "1",
+    "set_name": "Tarkir: Dragonstorm Tokens",
+    "artist": "Elizabeth Peiró",
+    "scryfall_uri": "https://scryfall.com/card/ttdm/3/monk?utm_source=api",
+    "es": null,
+    "rulings": [],
+    "art": "cards/monk-art.jpg",
+    "full": "cards/monk-full.jpg"
+  },
+  "role": {
+    "name": "Monster // Sorcerer",
+    "mana_cost": "",
+    "type_line": "Token Enchantment — Aura Role // Token Enchantment — Aura Role",
+    "oracle_text": "",
+    "power": null,
+    "toughness": null,
+    "set_name": "Wilds of Eldraine Tokens",
+    "artist": "Rovina Cai",
+    "scryfall_uri": "https://scryfall.com/card/twoe/15/monster-sorcerer?utm_source=api",
+    "es": null,
+    "rulings": [],
+    "art": "cards/role-art.jpg",
+    "full": "cards/role-full.jpg"
+  }
+}
