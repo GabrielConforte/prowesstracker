@@ -65,6 +65,11 @@
     display: flex; align-items: center; gap: 10px;
     background: var(--panel); border-radius: var(--radius); padding: 10px 12px;
   }
+  .avatar {
+    width: 40px; height: 40px; flex: none; border-radius: 50%;
+    display: grid; place-items: center; font-size: 1.35rem;
+    background: var(--panel-2); box-shadow: inset 0 0 0 2px var(--accent);
+  }
   .roster-item .name { flex: 1; min-width: 0; }
   .roster-item .name small { display: block; color: var(--muted); font-size: 0.75rem; }
   .roster-item .count { min-width: 1.5em; text-align: center; font-weight: 700; }
@@ -86,6 +91,12 @@
     position: absolute; top: 8px; right: 8px;
     width: 30px; height: 30px; background: var(--panel-2); color: var(--muted);
   }
+  .art {
+    align-self: center; width: 64px; height: 64px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 2.1rem;
+    background: radial-gradient(circle at 35% 30%, var(--panel-2), var(--bg));
+    box-shadow: 0 0 0 2px var(--accent), 0 0 18px -4px var(--accent);
+  }
   .pt { text-align: center; font-size: 2.6rem; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
   .pt .boosted { color: var(--green); }
   .card-name { text-align: center; font-weight: 600; }
@@ -98,7 +109,7 @@
   .prowess-count { font-weight: 400; opacity: 0.85; font-size: 0.85rem; }
 
   .pump { display: grid; grid-template-columns: auto 1fr 1fr 1fr; gap: 6px; align-items: center; }
-  .pump span { font-size: 0.75rem; color: var(--muted); width: 32px; }
+  .pump span { font-size: 1.1rem; width: 32px; text-align: center; }
   .pump button { background: var(--panel-2); padding: 9px 0; font-weight: 700; }
 
   .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -119,16 +130,16 @@
 
 <header>
   <div class="title-row">
-    <h1>Prowess Tracker</h1>
+    <h1>⚡🔥 Prowess Tracker</h1>
   </div>
   <div class="stats-row">
-    <span>Hechizos este turno: <b id="spellCount">0</b></span>
-    <span>Daño total: <b id="totalPower">0</b></span>
+    <span>📜 Hechizos este turno: <b id="spellCount">0</b></span>
+    <span>💥 Daño total: <b id="totalPower">0</b></span>
   </div>
   <div class="actions">
     <button class="btn-spell" id="castSpell" title="Dispara el prowess de todas las criaturas">⚡ Hechizo no-criatura</button>
     <button class="btn-undo" id="undo" title="Deshacer">↶</button>
-    <button class="btn-eot" id="endTurn">Fin de turno</button>
+    <button class="btn-eot" id="endTurn">🌙 Fin de turno</button>
   </div>
 </header>
 
@@ -152,6 +163,7 @@ const CREATURES = {
     keywords: ["Prisa"],
     trigger: { power: 1, toughness: 1 },
     accent: "#ef4444",
+    icon: "🔱",
   },
   slickshot: {
     name: "Slickshot Show-Off",
@@ -159,6 +171,7 @@ const CREATURES = {
     keywords: ["Vuela", "Prisa"],
     trigger: { power: 2, toughness: 0 },
     accent: "#f97316",
+    icon: "🦅",
   },
   drc: {
     name: "Dragon's Rage Channeler",
@@ -166,6 +179,7 @@ const CREATURES = {
     keywords: [],
     trigger: null,
     accent: "#a855f7",
+    icon: "🐉",
   },
   monk: {
     name: "Monk token",
@@ -174,6 +188,7 @@ const CREATURES = {
     keywords: [],
     trigger: { power: 1, toughness: 1 },
     accent: "#e5e7eb",
+    icon: "🥋",
   },
 };
 
@@ -183,6 +198,8 @@ const ROLE = { power: 1, toughness: 1 };
 const CUTTER = { power: 1, toughness: 1 };
 // Delirium: DRC pasa a ser 3/3 con vuelo.
 const DELIRIUM = { power: 2, toughness: 2 };
+
+const KW_ICONS = { "Vuela": "🪽", "Prisa": "💨", "Arrolla": "🦏" };
 
 const STORAGE_KEY = "prowess-tracker-state-v1";
 const MAX_UNDO = 50;
@@ -226,7 +243,7 @@ function undo() {
   nextId = Math.max(nextId, state.nextId || 1);
   saveState();
   render();
-  toast("Deshecho");
+  toast("↶ Deshecho");
 }
 
 function newCreature(type) {
@@ -287,7 +304,7 @@ function castSpell() {
     state.spells += 1;
     state.creatures.forEach(applyTrigger);
   });
-  toast(`Hechizo #${state.spells}: prowess a todas`);
+  toast(`⚡ Hechizo #${state.spells}: prowess a todas`);
 }
 
 function prowessOne(id) {
@@ -325,7 +342,7 @@ function endTurn() {
       c.triggers = 0;
     });
   });
-  toast("Fin de turno: bonus temporales limpiados");
+  toast("🌙 Fin de turno: bonus temporales limpiados");
 }
 
 // --- Render ---
@@ -355,6 +372,7 @@ function renderRoster() {
     const count = state.creatures.filter(c => c.type === type).length;
     const sub = def.subtitle || `${def.power}/${def.toughness}`;
     return el("div", { class: "roster-item" }, [
+      el("div", { class: "avatar", style: `--accent:${def.accent}` }, def.icon),
       el("div", { class: "name" }, [def.name, el("small", {}, sub)]),
       el("button", { class: "round", onclick: () => removeOne(type), disabled: count === 0, "aria-label": "Quitar" }, "−"),
       el("span", { class: "count" }, String(count)),
@@ -378,11 +396,11 @@ function renderCard(c) {
 
   const middle = def.trigger
     ? el("button", { class: "btn-prowess", onclick: () => prowessOne(c.id) }, [
-        `Prowess ${signed(def.trigger.power)}/${signed(def.trigger.toughness)} `,
+        `🔥 Prowess ${signed(def.trigger.power)}/${signed(def.trigger.toughness)} `,
         c.triggers ? el("span", { class: "prowess-count" }, `(×${c.triggers})`) : null,
       ])
     : el("button", { class: "toggle full delirium" + (state.delirium ? " on" : ""), onclick: toggleDelirium },
-        state.delirium ? "Delirium ACTIVO (3/3 vuela)" : "Activar delirium");
+        state.delirium ? "🌀 Delirium ACTIVO (3/3 vuela)" : "🌀 Activar delirium");
 
   const pumpRow = (label, stat) => el("div", { class: "pump" }, [
     el("span", {}, label),
@@ -391,22 +409,23 @@ function renderCard(c) {
 
   return el("div", { class: "card", style: `--accent:${def.accent}` }, [
     el("button", { class: "remove", onclick: () => removeById(c.id), "aria-label": "Sacar del campo" }, "×"),
+    el("div", { class: "art" }, def.icon),
     el("div", { class: "pt" }, [
       el("span", { class: boostedP ? "boosted" : "" }, String(s.p)),
       "/",
       el("span", { class: boostedT ? "boosted" : "" }, String(s.t)),
     ]),
     el("div", { class: "card-name" }, def.name),
-    el("div", { class: "keywords" }, s.kw.map(k => el("span", { class: "kw" + ((k === "Arrolla" || (k === "Prisa" && c.cutter) || (k === "Vuela" && c.type === "drc")) ? " on" : "") }, k))),
+    el("div", { class: "keywords" }, s.kw.map(k => el("span", { class: "kw" + ((k === "Arrolla" || (k === "Prisa" && c.cutter) || (k === "Vuela" && c.type === "drc")) ? " on" : "") }, `${KW_ICONS[k] || ""} ${k}`))),
     el("div", { class: "breakdown" }, parts.join(" · ")),
     middle,
-    pumpRow("Fue", "p"),
-    pumpRow("Res", "t"),
+    pumpRow("⚔️", "p"),
+    pumpRow("🛡️", "t"),
     el("div", { class: "toggles" }, [
       el("button", { class: "toggle" + (c.role ? " on" : ""), onclick: () => toggle(c.id, "role") },
-        c.role ? "✓ Monster role" : "+ Role token"),
+        c.role ? "👹 ✓ Monster role" : "👹 Role token"),
       el("button", { class: "toggle" + (c.cutter ? " on" : ""), onclick: () => toggle(c.id, "cutter") },
-        c.cutter ? "✓ Cori-Steel" : "Equipar Cori-Steel"),
+        c.cutter ? "🗡️ ✓ Cori-Steel" : "🗡️ Equipar Cori-Steel"),
     ]),
   ]);
 }
@@ -415,7 +434,7 @@ function render() {
   renderRoster();
   const field = document.getElementById("field");
   if (!state.creatures.length) {
-    field.replaceChildren(el("div", { class: "empty" }, "No hay criaturas en el campo. Agregalas con el +."));
+    field.replaceChildren(el("div", { class: "empty" }, "🃏 No hay criaturas en el campo. Agregalas con el +."));
   } else {
     field.replaceChildren(...state.creatures.map(renderCard));
   }
