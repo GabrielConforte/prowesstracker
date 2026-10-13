@@ -21,7 +21,7 @@ Abrí `index.html` en el navegador (ideal en el celular). No necesita instalaci�
 - **Equipar Cori-Steel**: +1/+1, arrolla y prisa. Permanente.
 - **Fin de turno**: suma un turno al contador y limpia prowess, pumps y el contador de hechizos (role, equipo y delirium quedan).
 - **Vidas**: contador de vida tuyo y del rival (−1 y +1), arranca en 20.
-- **💥 Pegar con todo**: resta al rival la fuerza total de tus criaturas.
+- **💥 Pegar con todo**: resta al rival la fuerza total de tus criaturas. El contador del rival reacciona según el golpe: leve (menos de 5), se sacude (5 a 10), se sacude fuerte (más de 10) o se rompe si es letal.
 - **🔄 Nueva partida**: reinicia vidas y campo (tocá dos veces para confirmar).
 - **↶**: deshacer.
 
