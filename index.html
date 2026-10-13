@@ -234,6 +234,60 @@
     .btn-reset { margin-top: 16px; }
   }
 
+  /* Animaciones graciosas */
+  .sprite { position: fixed; z-index: 60; pointer-events: none; line-height: 1; white-space: nowrap; text-shadow: 0 2px 6px #000a; }
+  .card { transform-origin: 50% 100%; }
+  .fx-summon { animation: fx-summon 0.6s cubic-bezier(.3, 1.4, .5, 1); }
+  @keyframes fx-summon {
+    0% { transform: translateY(-60px) scale(.3) rotate(-12deg); opacity: 0; }
+    55% { transform: translateY(6px) scale(1.08, .9) rotate(2deg); opacity: 1; }
+    75% { transform: translateY(-4px) scale(.96, 1.05); }
+  }
+  .fx-poof { animation: fx-poof 0.38s ease-in forwards; }
+  @keyframes fx-poof {
+    30% { transform: scale(1.1) rotate(-10deg); }
+    100% { transform: scale(0) rotate(240deg); opacity: 0; }
+  }
+  .fx-flex { animation: fx-flex 0.55s ease-out; }
+  @keyframes fx-flex {
+    20% { transform: translateY(-12px) scale(1.05) rotate(-3deg); }
+    40% { transform: translateY(-12px) scale(1.08) rotate(3deg); }
+    65% { transform: translateY(0) scale(1.1, .9); }
+    82% { transform: scale(.97, 1.04); }
+  }
+  .fx-shrug { animation: fx-shrug 0.6s ease-in-out; }
+  @keyframes fx-shrug {
+    25% { transform: rotate(-4deg) scale(.97); }
+    50% { transform: rotate(4deg) scale(.97); }
+    75% { transform: rotate(-2deg); }
+  }
+  .fx-pump { animation: fx-pump 0.4s cubic-bezier(.3, 1.8, .5, 1); }
+  @keyframes fx-pump { 40% { transform: scale(1.45); } }
+  .fx-clank { animation: fx-clank 0.3s linear; }
+  @keyframes fx-clank {
+    20% { transform: translate(-4px, 2px) rotate(-2deg); }
+    40% { transform: translate(4px, -2px) rotate(2deg); }
+    60% { transform: translate(-3px, 1px); }
+    80% { transform: translate(2px, 0); }
+  }
+  .fx-wobble { animation: fx-wobble 0.9s ease-in-out; }
+  @keyframes fx-wobble {
+    15% { transform: skew(-14deg) scale(1.1, .9); }
+    30% { transform: skew(11deg) scale(.92, 1.08); }
+    45% { transform: skew(-8deg) rotate(3deg); }
+    60% { transform: skew(5deg) rotate(-2deg); }
+    80% { transform: skew(-2deg); }
+  }
+  .fx-sleep { animation: fx-sleep 1.1s ease-in-out; }
+  @keyframes fx-sleep {
+    30% { transform: rotate(-5deg) translateY(4px) scale(1, .94); filter: brightness(.7); }
+    60% { transform: rotate(-5deg) translateY(4px) scale(1, .94); filter: brightness(.7); }
+    80% { transform: rotate(1deg) scale(1, 1.03); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fx-summon, .fx-poof, .fx-flex, .fx-shrug, .fx-pump, .fx-clank, .fx-wobble, .fx-sleep { animation: none; }
+  }
+
   /* Imágenes de Scryfall */
   .avatar, .art { position: relative; overflow: hidden; padding: 0; }
   .avatar img, .art img {
@@ -529,11 +583,27 @@ function stats(c) {
 // --- Acciones ---
 
 function addCreature(type) {
-  act(() => state.creatures.push(newCreature(type)));
+  const c = newCreature(type);
+  act(() => state.creatures.push(c));
+  const card = cardEl(c.id);
+  fx(card, "fx-summon");
+  burst(card, ["✨", "⭐", "✨"], 7, 60);
 }
 
+const leaving = new Set();
 function removeById(id) {
-  act(() => { state.creatures = state.creatures.filter(c => c.id !== id); });
+  if (leaving.has(id)) return;
+  const card = cardEl(id);
+  const remove = () => {
+    leaving.delete(id);
+    act(() => { state.creatures = state.creatures.filter(c => c.id !== id); });
+  };
+  if (!card || !motionOK()) return remove();
+  leaving.add(id);
+  burst(card, ["💨", "☁️", "💨"], 6, 50);
+  card.style.pointerEvents = "none";
+  card.classList.add("fx-poof");
+  setTimeout(remove, 380);
 }
 
 function applyTrigger(c) {
@@ -550,6 +620,21 @@ function castSpell() {
     state.creatures.forEach(applyTrigger);
   });
   toast(`⚡ Hechizo #${state.spells}: prowess a todas`);
+  burst(document.getElementById("castSpell"), ["⚡", "🔥", "✨", "⚡"], 10, 90);
+  state.creatures.forEach(c => celebrateTrigger(c));
+}
+
+// Las criaturas con prowess sacan músculo; DRC no tiene prowess y se encoge de hombros.
+function celebrateTrigger(c) {
+  const card = cardEl(c.id);
+  const trig = CREATURES[c.type].trigger;
+  if (!trig) {
+    fx(card, "fx-shrug");
+    floatText(card, "🤷", { size: 1.8 });
+    return;
+  }
+  fx(card, "fx-flex");
+  floatText(card, `💪 ${signed(trig.power)}/${signed(trig.toughness)}`, { color: "var(--green)" });
 }
 
 function prowessOne(id) {
@@ -557,6 +642,8 @@ function prowessOne(id) {
     const c = state.creatures.find(x => x.id === id);
     if (c) applyTrigger(c);
   });
+  const c = state.creatures.find(x => x.id === id);
+  if (c) celebrateTrigger(c);
 }
 
 function pump(id, stat, amount) {
@@ -565,6 +652,9 @@ function pump(id, stat, amount) {
     if (!c) return;
     if (stat === "p") c.pumpP += amount; else c.pumpT += amount;
   });
+  const card = cardEl(id);
+  fx(card?.querySelector(".pt"), "fx-pump");
+  floatText(card, `${stat === "p" ? "⚔️" : "🛡️"} +${amount}`, { color: stat === "p" ? "var(--red)" : "var(--blue)" });
 }
 
 function toggle(id, key) {
@@ -572,10 +662,26 @@ function toggle(id, key) {
     const c = state.creatures.find(x => x.id === id);
     if (c) c[key] = !c[key];
   });
+  const c = state.creatures.find(x => x.id === id);
+  if (!c || !c[key]) return;
+  const card = cardEl(id);
+  if (key === "role") {
+    stamp(card, "👹");
+    setTimeout(() => fx(card, "fx-clank"), 330);
+  } else {
+    flyIn(card, "🗡️");
+    setTimeout(() => { fx(card, "fx-clank"); burst(card, ["✨", "💥"], 5, 40); }, 420);
+  }
 }
 
 function toggleDelirium() {
   act(() => { state.delirium = !state.delirium; });
+  if (!state.delirium) return;
+  state.creatures.filter(c => c.type === "drc").forEach(c => {
+    const card = cardEl(c.id);
+    fx(card, "fx-wobble");
+    burst(card, ["🌀", "😵‍💫", "🌀"], 6, 70);
+  });
 }
 
 function changeLife(who, delta) {
@@ -612,7 +718,10 @@ function animateHit(dmg, lethal) {
   box.append(pop);
   setTimeout(() => pop.remove(), 1100);
 
-  if (lethal && !reducedMotion.matches) setTimeout(() => shatter(box), 450);
+  if (lethal && !reducedMotion.matches) {
+    setTimeout(() => shatter(box), 450);
+    setTimeout(() => rain(["💀", "🎉", "⚰️", "🎊", "🔥"], 36), 900);
+  }
 }
 
 // Parte el contador en dos mitades que caen, y después vuelve a aparecer agrietado.
@@ -687,6 +796,108 @@ function endTurn() {
     });
   });
   toast(`🌙 Turno ${state.turn}: bonus temporales limpiados`);
+  state.creatures.forEach((c, i) => setTimeout(() => {
+    const card = cardEl(c.id);
+    fx(card, "fx-sleep");
+    floatText(card, "💤", { size: 1.6, duration: 1400 });
+  }, i * 90));
+}
+
+// --- Animaciones ---
+
+function motionOK() { return !reducedMotion.matches; }
+
+function cardEl(id) { return document.querySelector(`.card[data-id="${id}"]`); }
+
+// Reinicia una animación CSS sobre un elemento.
+function fx(node, cls) {
+  if (!node || !motionOK()) return;
+  node.classList.remove(cls);
+  void node.offsetWidth;
+  node.classList.add(cls);
+  node.addEventListener("animationend", () => node.classList.remove(cls), { once: true });
+}
+
+// Los efectos flotantes viven en el body para sobrevivir a los re-render.
+function sprite(text, x, y, size = 1.4) {
+  const node = el("span", { class: "sprite", "aria-hidden": "true" }, text);
+  node.style.left = `${x}px`;
+  node.style.top = `${y}px`;
+  node.style.fontSize = `${size}rem`;
+  document.body.append(node);
+  return node;
+}
+
+function centerOf(node) {
+  const r = node.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2, r };
+}
+
+function floatText(node, text, { color, size = 1.1, duration = 900 } = {}) {
+  if (!node || !motionOK()) return;
+  const { x, r } = centerOf(node);
+  const s = sprite(text, x, r.top + 18, size);
+  s.style.fontWeight = "900";
+  if (color) s.style.color = color;
+  s.animate([
+    { transform: "translate(-50%, 0) scale(.5)", opacity: 0 },
+    { transform: "translate(-50%, -14px) scale(1.25)", opacity: 1, offset: 0.2 },
+    { transform: "translate(-50%, -60px) scale(1)", opacity: 0 },
+  ], { duration, easing: "ease-out" }).onfinish = () => s.remove();
+}
+
+function burst(node, emojis, count = 8, spread = 70) {
+  if (!node || !motionOK()) return;
+  const { x, y } = centerOf(node);
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+    const dist = spread * (0.6 + Math.random() * 0.6);
+    const s = sprite(emojis[i % emojis.length], x, y, 0.9 + Math.random() * 0.6);
+    s.animate([
+      { transform: "translate(-50%, -50%) scale(.3) rotate(0)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px)) scale(1) rotate(${Math.random() * 360 - 180}deg)`, opacity: 0 },
+    ], { duration: 650 + Math.random() * 250, easing: "cubic-bezier(.2, .8, .3, 1)" }).onfinish = () => s.remove();
+  }
+}
+
+// Un sello gigante que cae sobre la carta.
+function stamp(node, emoji) {
+  if (!node || !motionOK()) return;
+  const { x, y } = centerOf(node);
+  const s = sprite(emoji, x, y, 3.2);
+  s.animate([
+    { transform: "translate(-50%, -50%) scale(3) rotate(-25deg)", opacity: 0 },
+    { transform: "translate(-50%, -50%) scale(.9) rotate(8deg)", opacity: 1, offset: 0.35 },
+    { transform: "translate(-50%, -50%) scale(1.1) rotate(0)", opacity: 1, offset: 0.55 },
+    { transform: "translate(-50%, -50%) scale(1)", opacity: 0 },
+  ], { duration: 950, easing: "ease-out" }).onfinish = () => s.remove();
+}
+
+// Un objeto que entra volando desde el costado y se clava en la carta.
+function flyIn(node, emoji) {
+  if (!node || !motionOK()) return;
+  const { x, y } = centerOf(node);
+  const from = x < innerWidth / 2 ? -x - 40 : innerWidth - x + 40;
+  const s = sprite(emoji, x, y, 2.4);
+  s.animate([
+    { transform: `translate(calc(-50% + ${from}px), calc(-50% - 60px)) rotate(${from < 0 ? -720 : 720}deg)` },
+    { transform: "translate(-50%, -50%) rotate(0) scale(1.3)", offset: 0.6 },
+    { transform: "translate(-50%, -50%) scale(1)", opacity: 0 },
+  ], { duration: 700, easing: "cubic-bezier(.3, .7, .4, 1)" }).onfinish = () => s.remove();
+}
+
+// Lluvia de emojis desde arriba de la pantalla.
+function rain(emojis, count = 30) {
+  if (!motionOK()) return;
+  for (let i = 0; i < count; i++) {
+    const s = sprite(emojis[i % emojis.length], Math.random() * innerWidth, -40, 1.2 + Math.random() * 1.2);
+    const drift = Math.random() * 80 - 40;
+    s.animate([
+      { transform: "translate(-50%, 0) rotate(0)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${drift}px), ${innerHeight + 80}px) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0.9 },
+    ], { duration: 1600 + Math.random() * 1400, delay: Math.random() * 700, easing: "cubic-bezier(.4, 0, .8, .6)", fill: "backwards" })
+      .onfinish = () => s.remove();
+  }
 }
 
 // --- Render ---
@@ -751,7 +962,7 @@ function renderCard(c) {
     ...[3, 2, 1].map(n => el("button", { onclick: () => pump(c.id, stat, n) }, `+${n}`)),
   ]);
 
-  return el("div", { class: "card", style: `--accent:${def.accent}` }, [
+  return el("div", { class: "card", "data-id": c.id, style: `--accent:${def.accent}` }, [
     el("div", { class: "card-top" }, [
       art[type]
         ? el("button", { class: "art", onclick: () => showCard(type), "aria-label": `Ver carta de ${def.name}` }, artContent(type))
