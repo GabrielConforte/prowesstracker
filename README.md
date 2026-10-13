@@ -27,6 +27,6 @@ Abrí `index.html` en el navegador (ideal en el celular). No necesita instalaci�
 - **🔄** (arriba a la derecha): nueva partida. Reinicia vidas, turnos, historial y campo; tocalo dos veces para confirmar.
 - **↶**: deshacer.
 - **🔊 / 🔇**: sonidos (sintetizados en el navegador, sin archivos). La elección queda guardada.
-- **Imágenes**: la app busca en [Scryfall](https://scryfall.com) la ilustración de cada criatura (la del Monk sale de la ficha que crea Cori-Steel Cutter) y la guarda en el navegador por 30 días. Tocá la imagen de una carta en el campo para verla completa. Sin conexión se ven los emojis.
+- **Cartas**: imágenes, texto (en español e inglés) y rulings oficiales de [Scryfall](https://scryfall.com), guardados en `cards/`. Tocá la imagen de una criatura para ver la carta completa con su texto y rulings; abajo de todo están Cori-Steel Cutter, Monstrous Rage y el Monster role. Para actualizarlos, corré la acción **Descargar cartas de Scryfall** en la pestaña Actions de GitHub (o editá `scripts/fetch_scryfall.py` para sumar cartas).
 
 El estado se guarda en el navegador.

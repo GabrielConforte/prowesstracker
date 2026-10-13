@@ -347,11 +347,31 @@
   .credit { text-align: center; font-size: 0.7rem; color: var(--muted); margin-top: 14px; }
   .credit a { color: inherit; }
   .viewer {
-    position: fixed; inset: 0; z-index: 100; background: #000d;
-    display: grid; place-items: center; padding: 16px; cursor: zoom-out;
+    position: fixed; inset: 0; z-index: 100; background: #000e;
+    overflow-y: auto; padding: 16px; padding-top: calc(16px + env(safe-area-inset-top, 0px));
   }
   .viewer[hidden] { display: none; }
-  .viewer img { width: min(100%, 420px); border-radius: 4.75% / 3.5%; box-shadow: 0 10px 40px #000; }
+  .viewer-close {
+    position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 1;
+    width: 40px; height: 40px; border-radius: 50%; background: var(--panel-2); font-size: 1.4rem;
+  }
+  .viewer-body { max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  .viewer-card { width: min(100%, 340px); align-self: center; border-radius: 4.75% / 3.5%; box-shadow: 0 10px 40px #000; }
+  .viewer-info { background: var(--panel); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .viewer-info p { margin: 0; }
+  .viewer-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .viewer-title h3 { margin: 0; font-size: 1.1rem; text-wrap: balance; }
+  .mana { white-space: nowrap; }
+  .viewer-info .type { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+  .oracle { white-space: pre-line; line-height: 1.45; font-size: 0.92rem; }
+  .viewer-info .muted { color: var(--muted); font-size: 0.8rem; }
+  .viewer-info .small { font-size: 0.72rem; }
+  .lang { align-self: flex-start; background: var(--panel-2); padding: 6px 10px; font-size: 0.8rem; }
+  .rulings summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+  .rulings ul { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; line-height: 1.4; }
+  .rulings time { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+  .reference { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ref { background: var(--panel); padding: 8px 12px; font-size: 0.85rem; }
 
   .toast {
     position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
@@ -407,11 +427,15 @@
   <h2 class="history-title">📖 Historial</h2>
   <div class="history" id="history"></div>
 
-  <p class="credit">Imágenes de cartas: <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Tocá la imagen de una criatura para ver la carta.</p>
+  <h2 class="history-title">📚 Otras cartas</h2>
+  <div class="reference" id="reference"></div>
+
+  <p class="credit">Imágenes, textos y rulings: <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Tocá la imagen de una criatura para ver la carta.</p>
 </main>
 
 <div class="viewer" id="viewer" hidden>
-  <img id="viewerImg" alt="">
+  <button class="viewer-close" id="viewerClose" aria-label="Cerrar">×</button>
+  <div class="viewer-body" id="viewerBody"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -423,7 +447,6 @@ const CREATURES = {
   swiftspear: {
     name: "Monastery Swiftspear",
     short: "Swiftspear",
-    scryfall: "Monastery Swiftspear",
     power: 1, toughness: 2,
     keywords: ["Prisa"],
     trigger: { power: 1, toughness: 1 },
@@ -433,7 +456,6 @@ const CREATURES = {
   slickshot: {
     name: "Slickshot Show-Off",
     short: "Slickshot",
-    scryfall: "Slickshot Show-Off",
     power: 1, toughness: 2,
     keywords: ["Vuela", "Prisa"],
     trigger: { power: 2, toughness: 0 },
@@ -443,7 +465,6 @@ const CREATURES = {
   drc: {
     name: "Dragon's Rage Channeler",
     short: "DRC",
-    scryfall: "Dragon's Rage Channeler",
     power: 1, toughness: 1,
     keywords: [],
     trigger: null,
@@ -453,7 +474,6 @@ const CREATURES = {
   monk: {
     name: "Monk token",
     short: "Monk",
-    scryfall: "token:Monk",
     subtitle: "Ficha 1/1",
     power: 1, toughness: 1,
     keywords: [],
@@ -470,63 +490,25 @@ const CUTTER = { power: 1, toughness: 1 };
 // Delirium: DRC pasa a ser 3/3 con vuelo.
 const DELIRIUM = { power: 2, toughness: 2 };
 
-// --- Imágenes de Scryfall ---
-// Se piden una sola vez y se guardan en el navegador (las URLs de Scryfall son estables).
-const SCRYFALL = "https://api.scryfall.com";
-const ART_KEY = "prowess-tracker-art-v1";
-const ART_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
-let art = loadArtCache();
+// --- Cartas (imágenes, texto y rulings) ---
+// Los datos los baja de Scryfall una tarea de GitHub Actions y quedan en cards/ junto a la app,
+// así funcionan sin conexión y sin pedirle nada a Scryfall desde el celular.
+let cardData = {};
+let art = {};
 
-function loadArtCache() {
+async function loadCards() {
   try {
-    const cached = JSON.parse(localStorage.getItem(ART_KEY) || "{}");
-    if (cached.savedAt && Date.now() - cached.savedAt < ART_MAX_AGE) return cached.cards || {};
-  } catch (e) { /* sin cache */ }
-  return {};
-}
-
-function saveArtCache() {
-  try { localStorage.setItem(ART_KEY, JSON.stringify({ savedAt: Date.now(), cards: art })); } catch (e) { /* ignorar */ }
-}
-
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function scryfall(url) {
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error(`Scryfall ${res.status}`);
-  await sleep(100); // Scryfall pide 50-100 ms entre pedidos
-  return res.json();
-}
-
-function imagesOf(card) {
-  const uris = card.image_uris || card.card_faces?.[0]?.image_uris;
-  return uris ? { art: uris.art_crop, full: uris.normal } : null;
-}
-
-// La ficha de Monk se busca a través de Cori-Steel Cutter, que es la carta que la crea.
-async function fetchMonkToken() {
-  const cutter = await scryfall(`${SCRYFALL}/cards/named?exact=${encodeURIComponent("Cori-Steel Cutter")}`);
-  const part = (cutter.all_parts || []).find(p => p.component === "token" && /monk/i.test(p.name));
-  if (part) return scryfall(part.uri);
-  const found = await scryfall(`${SCRYFALL}/cards/search?q=${encodeURIComponent("t:token t:monk o:prowess")}`);
-  return found.data[0];
-}
-
-async function loadArt() {
-  let changed = false;
-  for (const [type, def] of Object.entries(CREATURES)) {
-    if (art[type] || !def.scryfall) continue;
-    try {
-      const card = def.scryfall === "token:Monk"
-        ? await fetchMonkToken()
-        : await scryfall(`${SCRYFALL}/cards/named?exact=${encodeURIComponent(def.scryfall)}`);
-      const imgs = card && imagesOf(card);
-      if (imgs) { art[type] = imgs; changed = true; }
-    } catch (e) {
-      // Sin conexión o Scryfall caído: seguimos con los emojis.
+    const res = await fetch("cards/cards.json");
+    if (!res.ok) return;
+    cardData = await res.json();
+    for (const key of Object.keys(CREATURES)) {
+      if (cardData[key]?.art) art[key] = { art: cardData[key].art, full: cardData[key].full };
     }
+    render();
+    renderReference();
+  } catch (e) {
+    // Sin datos (por ejemplo, abriendo el archivo suelto): quedan los emojis.
   }
-  if (changed) { saveArtCache(); render(); }
 }
 
 // Imagen recortada de la carta sobre el emoji: si la imagen no carga, queda el emoji.
@@ -541,12 +523,62 @@ function artContent(type) {
   return [def.icon, img];
 }
 
-function showCard(type) {
-  if (!art[type]) return;
-  const img = document.getElementById("viewerImg");
-  img.src = art[type].full;
-  img.alt = CREATURES[type].name;
-  document.getElementById("viewer").hidden = false;
+const MANA = { W: "⚪", U: "🔵", B: "⚫", R: "🔴", G: "🟢", C: "◇", T: "↷", X: "Ⓧ",
+  0: "⓪", 1: "①", 2: "②", 3: "③", 4: "④", 5: "⑤", 6: "⑥", 7: "⑦", 8: "⑧", 9: "⑨" };
+function manaText(cost) {
+  return (cost || "").replace(/\{([^}]+)\}/g, (_, sym) => MANA[sym] || `(${sym})`);
+}
+
+// Visor: carta completa, texto (en español si está) y rulings oficiales.
+function showCard(key) {
+  const data = cardData[key];
+  if (!data?.full) return;
+  const es = data.es;
+  let lang = es?.text ? "es" : "en";
+  const body = document.getElementById("viewerBody");
+
+  const draw = () => {
+    const useEs = lang === "es" && es;
+    const name = useEs && es.name ? es.name : data.name;
+    const type = useEs && es.type_line ? es.type_line : data.type_line;
+    const text = useEs && es.text ? es.text : data.oracle_text;
+    body.replaceChildren(
+      el("img", { src: data.full, alt: data.name, class: "viewer-card" }),
+      el("div", { class: "viewer-info" }, [
+        el("div", { class: "viewer-title" }, [
+          el("h3", {}, name),
+          data.mana_cost ? el("span", { class: "mana" }, manaText(data.mana_cost)) : null,
+        ]),
+        name !== data.name ? el("p", { class: "muted" }, data.name) : null,
+        el("p", { class: "type" }, type),
+        el("p", { class: "oracle" }, text || "—"),
+        es?.text ? el("button", { class: "lang", onclick: () => { lang = lang === "es" ? "en" : "es"; draw(); } },
+          lang === "es" ? "🇬🇧 Ver texto en inglés" : "🇪🇸 Ver texto en español") : null,
+        data.rulings?.length
+          ? el("details", { class: "rulings" }, [
+              el("summary", {}, `📜 Rulings oficiales (${data.rulings.length})`),
+              el("ul", {}, data.rulings.map(r => el("li", {}, [el("time", {}, r.date), " ", r.text]))),
+            ])
+          : el("p", { class: "muted" }, "Sin rulings."),
+        el("p", { class: "muted small" }, `${data.set_name || ""}${data.artist ? " · Ilustración: " + data.artist : ""}`),
+      ]),
+    );
+  };
+  draw();
+  const viewer = document.getElementById("viewer");
+  viewer.hidden = false;
+  viewer.scrollTop = 0;
+}
+
+function closeViewer() {
+  document.getElementById("viewer").hidden = true;
+}
+
+// Accesos a las otras cartas del mazo que usa la app.
+function renderReference() {
+  const refs = [["cutter", "🗡️"], ["rage", "👹"], ["role", "🎭"]].filter(([k]) => cardData[k]);
+  document.getElementById("reference").replaceChildren(...refs.map(([k, icon]) =>
+    el("button", { class: "ref", onclick: () => showCard(k) }, `${icon} ${cardData[k].es?.name || cardData[k].name}`)));
 }
 
 const KW_ICONS = { "Vuela": "🪽", "Prisa": "💨", "Arrolla": "🦏" };
@@ -1445,11 +1477,12 @@ document.getElementById("newGame").addEventListener("click", newGame);
 document.querySelectorAll("[data-life]").forEach(btn =>
   btn.addEventListener("click", () => changeLife(btn.dataset.life, Number(btn.dataset.d))));
 
-document.getElementById("viewer").addEventListener("click", e => { e.currentTarget.hidden = true; });
-document.addEventListener("keydown", e => { if (e.key === "Escape") document.getElementById("viewer").hidden = true; });
+document.getElementById("viewer").addEventListener("click", e => { if (e.target === e.currentTarget) closeViewer(); });
+document.getElementById("viewerClose").addEventListener("click", closeViewer);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeViewer(); });
 
 render();
-loadArt();
+loadCards();
 </script>
 </body>
 </html>
