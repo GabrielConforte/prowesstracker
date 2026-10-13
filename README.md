@@ -12,7 +12,7 @@ Abrí `index.html` en el navegador (ideal en el celular). No necesita instalaci�
 4. Queda un ícono 🔥 que abre la app a pantalla completa. Funciona sin cuenta y guarda la partida en el celular.
 
 ## Uso
-- **Criaturas**: `+` / `−` para poner o sacar Monastery Swiftspear, Slickshot Show-Off, Dragon's Rage Channeler o Monk tokens del campo.
+- **Criaturas**: tocá una criatura para ponerla en el campo (el número indica cuántas hay). Para sacarla, tocá la ✕ de su carta.
 - **⚡ Hechizo no-criatura**: dispara el trigger de todas las criaturas a la vez (Swiftspear y Monk +1/+1, Slickshot +2/+0, DRC nada).
 - **Prowess** en cada carta: dispara solo esa criatura.
 - **+3 / +2 / +1** de fuerza y resistencia: pumps hasta fin de turno.
