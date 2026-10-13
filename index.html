@@ -55,9 +55,7 @@
     padding: 12px 16px;
     border-bottom: 1px solid var(--panel-2);
   }
-  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  h1 { font-size: 1.15rem; margin: 0; }
-  .stats-row { display: flex; gap: 14px; color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+  .stats-row { display: flex; gap: 14px; color: var(--muted); font-size: 0.85rem; }
   .stats-row b { color: var(--text); }
   .life { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   .life-box { background: var(--panel); border-radius: 12px; padding: 6px 8px; box-shadow: inset 0 0 0 1px var(--life-c); }
@@ -132,10 +130,10 @@
   main { padding: 16px; max-width: 1100px; margin: 0 auto; }
   h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
 
-  .roster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 22px; }
+  .roster { display: grid; grid-template-columns: repeat(4, minmax(0, 84px)); gap: 8px; margin-bottom: 22px; }
   .roster-item {
-    display: flex; align-items: center; gap: 10px; text-align: left; min-width: 0;
-    background: var(--panel); border-radius: var(--radius); padding: 10px 12px;
+    display: grid; place-items: center; min-width: 0;
+    background: var(--panel); border-radius: var(--radius); padding: 10px 0;
   }
   .roster-item:hover { background: var(--panel-2); }
   .badge {
@@ -150,9 +148,7 @@
     display: grid; place-items: center; font-size: 1.35rem;
     background: var(--panel-2); box-shadow: inset 0 0 0 2px var(--accent);
   }
-  .roster-item .name { flex: 1; min-width: 0; }
   .name-short { display: none; }
-  .roster-item .name small { display: block; color: var(--muted); font-size: 0.75rem; }
 
   .field { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
   .empty { color: var(--muted); text-align: center; padding: 30px 10px; background: var(--panel); border-radius: var(--radius); }
@@ -199,8 +195,7 @@
   /* Celular: todo más compacto, criaturas de a dos por fila */
   @media (max-width: 600px) {
     header { padding: 8px 12px; }
-    h1 { font-size: 1rem; }
-    .stats-row { gap: 10px; font-size: 0.78rem; margin-top: 2px; }
+    .stats-row { gap: 10px; font-size: 0.78rem; }
     .life { margin-top: 6px; gap: 6px; }
     .life-box { padding: 4px 6px; }
     .life-label { font-size: 0.7rem; }
@@ -215,10 +210,8 @@
     .name-short { display: inline; }
 
     .roster { gap: 6px; margin-bottom: 14px; }
-    .roster-item { flex-direction: column; gap: 4px; padding: 8px 2px 6px; text-align: center; }
-    .avatar { width: 36px; height: 36px; font-size: 1.2rem; }
-    .roster-item .name { font-size: 0.75rem; font-weight: 600; }
-    .roster-item .name small { display: none; }
+    .roster { grid-template-columns: repeat(4, 1fr); }
+    .roster-item { padding: 8px 0; }
 
     .btn-attack { padding: 10px; font-size: 0.9rem; margin-bottom: 8px; }
     .field { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -252,9 +245,6 @@
 <body>
 
 <header>
-  <div class="title-row">
-    <h1>⚡🔥 Prowess Tracker</h1>
-  </div>
   <div class="stats-row">
     <span>⏳ Turno <b id="turnCount">1</b></span>
     <span>📜 Hechizos: <b id="spellCount">0</b></span>
@@ -618,15 +608,10 @@ function renderRoster() {
   roster.replaceChildren(...Object.entries(CREATURES).map(([type, def]) => {
     const count = state.creatures.filter(c => c.type === type).length;
     const sub = def.subtitle || `${def.power}/${def.toughness}`;
-    return el("button", { class: "roster-item", style: `--accent:${def.accent}`, onclick: () => addCreature(type), "aria-label": `Agregar ${def.name}` }, [
+    return el("button", { class: "roster-item", style: `--accent:${def.accent}`, onclick: () => addCreature(type), "aria-label": `Agregar ${def.name}`, title: `${def.name} (${sub})` }, [
       el("div", { class: "avatar" }, [
         def.icon,
         count ? el("span", { class: "badge" }, String(count)) : null,
-      ]),
-      el("div", { class: "name" }, [
-        el("span", { class: "name-full" }, def.name),
-        el("span", { class: "name-short" }, def.short),
-        el("small", {}, sub),
       ]),
     ]);
   }));
