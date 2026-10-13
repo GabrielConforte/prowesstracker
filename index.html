@@ -243,6 +243,8 @@
   .side-opp { color: #fca5a5; }
   .btn-eot.opp { background: #475569; color: var(--text); }
   .btn-tap { background: #3f1d1d; color: #fecaca; padding: 8px; font-weight: 700; font-size: 0.85rem; }
+  .btn-tap.sick { background: var(--panel-2); color: var(--muted); font-weight: 600; }
+  .btn-tap.sick:disabled { opacity: 1; }
   .btn-tap.tapped { background: var(--panel-2); color: var(--muted); letter-spacing: 0.06em; }
   .card.tapped { background: #171920; }
   .card.tapped > :not(.btn-tap):not(.card-top) { opacity: 0.55; }
@@ -612,6 +614,8 @@ function newCreature(type) {
     role: false,              // Monster role (permanente)
     cutter: false,            // Cori-Steel Cutter equipada (permanente)
     tapped: false,            // atacó este turno
+    enteredTurn: state.turn,  // para el mareo de invocación
+    enteredSide: state.side,
   };
 }
 
@@ -760,21 +764,35 @@ function changeLife(who, delta) {
 
 // Daño que podés hacer ahora: solo cuentan las criaturas sin tapear.
 function totalPower() {
-  return untapped().reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
+  return readyAttackers().reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
 }
 
 function untapped() {
   return state.creatures.filter(c => !c.tapped);
 }
 
+// Mareo de invocación: si entró durante este mismo turno tuyo y no tiene prisa, no puede atacar.
+// (Si entró en el turno del rival, ya la controlabas al empezar tu turno.)
+function summoningSick(c) {
+  return c.enteredTurn === state.turn && c.enteredSide === "me" && state.side === "me" && !stats(c).kw.includes("Prisa");
+}
+
+function canAttack(c) {
+  return !c.tapped && !summoningSick(c);
+}
+
+function readyAttackers() {
+  return state.creatures.filter(canAttack);
+}
+
 function attack() {
-  attackWith(untapped().map(c => c.id));
+  attackWith(readyAttackers().map(c => c.id));
 }
 
 // Atacan las criaturas indicadas: quedan tapeadas y su fuerza va a la vida del rival.
 function attackWith(ids) {
   if (state.side !== "me") return;
-  const attackers = state.creatures.filter(c => ids.includes(c.id) && !c.tapped);
+  const attackers = state.creatures.filter(c => ids.includes(c.id) && canAttack(c));
   if (!attackers.length) return;
   const dmg = attackers.reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
   const lethal = dmg > 0 && state.life.opp > 0 && state.life.opp - dmg <= 0;
@@ -1369,7 +1387,9 @@ function renderCard(c) {
     ]),
     c.tapped
       ? el("button", { class: "btn-tap tapped", onclick: () => untap(c.id), title: "Enderezar sin deshacer el daño" }, "↪️ TAPEADA")
-      : el("button", { class: "btn-tap", onclick: () => attackWith([c.id]), disabled: state.side !== "me" }, `⚔️ Atacar (${Math.max(0, s.p)})`),
+      : summoningSick(c)
+        ? el("button", { class: "btn-tap sick", disabled: true, title: "Mareo de invocación: entró este turno y no tiene prisa" }, "😵 Recién invocada")
+        : el("button", { class: "btn-tap", onclick: () => attackWith([c.id]), disabled: state.side !== "me" }, `⚔️ Atacar (${Math.max(0, s.p)})`),
   ]);
 }
 
@@ -1392,9 +1412,9 @@ function render() {
   const power = totalPower();
   document.getElementById("totalPower").textContent = power;
   const attackBtn = document.getElementById("attack");
-  const ready = untapped().length;
+  const ready = readyAttackers().length;
   attackBtn.textContent = state.side !== "me" ? "⏳ Turno rival: no podés atacar"
-    : ready ? `💥 Atacar con todo: −${power} al rival` : "💤 Todas tapeadas";
+    : ready ? `💥 Atacar con todo: −${power} al rival` : (untapped().length ? "😵 Nadie puede atacar todavía" : "💤 Todas tapeadas");
   attackBtn.disabled = state.side !== "me" || ready === 0;
   renderHistory();
   for (const [who, id] of [["me", "lifeMe"], ["opp", "lifeOpp"]]) {

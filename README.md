@@ -20,7 +20,7 @@ Abrí `index.html` en el navegador (ideal en el celular). No necesita instalaci�
 - **Role token** (Monstrous Rage): Monster role, +1/+1 y arrolla. Permanente.
 - **Equipar Cori-Steel**: +1/+1, arrolla y prisa. Permanente.
 - **🌙 Fin de turno / ☀️ Fin turno rival**: alterna entre tu turno y el del rival. En los dos se limpian prowess, pumps y el contador de hechizos (role, equipo y delirium quedan). Al empezar tu turno siguiente se enderezan tus criaturas y sube el número de turno.
-- **⚔️ Atacar** (en cada carta) o **💥 Atacar con todo**: las criaturas que atacan quedan **TAPEADAS** y su fuerza se resta a la vida del rival. Solo en tu turno. Tocando "TAPEADA" se endereza a mano.
+- **⚔️ Atacar** (en cada carta) o **💥 Atacar con todo**: las criaturas que atacan quedan **TAPEADAS** y su fuerza se resta a la vida del rival. Solo en tu turno, y respetando el mareo de invocación: DRC y los Monk no pueden atacar el turno en que entran, salvo que el Monk tenga Cori-Steel (que da prisa). Swiftspear y Slickshot tienen prisa. Tocando "TAPEADA" se endereza a mano.
 - **📖 Historial**: eventos agrupados por turno (tuyo y del rival), con la vida perdida de cada lado en ese turno.
 - **Vidas**: contador de vida tuyo y del rival (−1 y +1), arranca en 20.
 - **💥 Pegar con todo**: resta al rival la fuerza total de tus criaturas. El contador del rival reacciona según el golpe: leve (menos de 5), se sacude (5 a 10), se sacude fuerte (más de 10) o se rompe si es letal.
