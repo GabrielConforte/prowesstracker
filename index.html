@@ -234,6 +234,46 @@
     .btn-reset { margin-top: 16px; }
   }
 
+  /* Turnos, tapeo e historial */
+  .side-me { color: #86efac; }
+  .side-opp { color: #fca5a5; }
+  .btn-eot.opp { background: #475569; color: var(--text); }
+  .btn-tap { background: #3f1d1d; color: #fecaca; padding: 8px; font-weight: 700; font-size: 0.85rem; }
+  .btn-tap.tapped { background: var(--panel-2); color: var(--muted); letter-spacing: 0.06em; }
+  .card.tapped { background: #171920; }
+  .card.tapped > :not(.btn-tap):not(.card-top) { opacity: 0.55; }
+  .card.tapped .pt { opacity: 0.6; }
+  .card.tapped .art { transform: rotate(90deg); filter: grayscale(0.6); transition: transform 0.4s; }
+  .fx-charge { animation: fx-charge 0.45s ease-in-out; }
+  @keyframes fx-charge {
+    30% { transform: translateY(14px) scale(.96); }
+    55% { transform: translateY(-26px) scale(1.06) rotate(-2deg); }
+  }
+  .fx-wake { animation: fx-wake 0.6s ease-out; }
+  @keyframes fx-wake {
+    30% { transform: translateY(-8px) scale(1.04); filter: brightness(1.4); }
+    60% { transform: translateY(2px) scale(.98); }
+  }
+  .history { display: flex; flex-direction: column; gap: 6px; }
+  .history-title { margin-top: 22px; }
+  .turn-log { background: var(--panel); border-radius: 12px; padding: 0 12px; }
+  .turn-log.current { box-shadow: inset 0 0 0 1px var(--panel-2); }
+  .turn-log summary {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 10px 0; cursor: pointer; list-style: none; font-size: 0.9rem;
+  }
+  .turn-log summary::-webkit-details-marker { display: none; }
+  .turn-log summary::before { content: "▸"; color: var(--muted); margin-right: -2px; }
+  .turn-log[open] summary::before { content: "▾"; }
+  .turn-name { flex: 1; font-weight: 700; }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tag.opp { background: #3f1d1d; color: #fca5a5; font-weight: 700; }
+  .tag.me { background: #3b2a0a; color: #fcd34d; font-weight: 700; }
+  .turn-log ul { margin: 0 0 10px; padding-left: 18px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 3px; }
+  .turn-log .muted { margin: 0 0 10px; font-size: 0.8rem; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .fx-charge, .fx-wake { animation: none; } }
+
   /* Animaciones graciosas */
   .sprite { position: fixed; z-index: 60; pointer-events: none; line-height: 1; white-space: nowrap; text-shadow: 0 2px 6px #000a; }
   .card { transform-origin: 50% 100%; }
@@ -319,9 +359,9 @@
 
 <header>
   <div class="stats-row">
-    <span>⏳ Turno <b id="turnCount">1</b></span>
+    <span>⏳ Turno <b id="turnCount">1</b> · <b id="turnSide" class="side-me">Tu turno</b></span>
     <span>📜 Hechizos: <b id="spellCount">0</b></span>
-    <span>💥 Daño total: <b id="totalPower">0</b></span>
+    <span>💥 Daño: <b id="totalPower">0</b></span>
   </div>
   <div class="life">
     <div class="life-box me">
@@ -355,6 +395,9 @@
   <h2>Campo</h2>
   <button class="btn-attack" id="attack">💥 Pegar con todo</button>
   <div class="field" id="field"></div>
+
+  <h2 class="history-title">📖 Historial</h2>
+  <div class="history" id="history"></div>
 
   <button class="btn-reset" id="newGame">🔄 Nueva partida</button>
   <p class="credit">Imágenes de cartas: <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Tocá la imagen de una criatura para ver la carta.</p>
@@ -510,7 +553,7 @@ let history = [];
 let nextId = state.nextId || 1;
 
 function freshState() {
-  return { creatures: [], spells: 0, turn: 1, delirium: false, life: { me: STARTING_LIFE, opp: STARTING_LIFE }, nextId: 1 };
+  return { creatures: [], spells: 0, turn: 1, side: "me", log: [], delirium: false, life: { me: STARTING_LIFE, opp: STARTING_LIFE }, nextId: 1 };
 }
 
 function loadState() {
@@ -521,6 +564,8 @@ function loadState() {
       if (parsed && Array.isArray(parsed.creatures)) {
         if (!parsed.life) parsed.life = { me: STARTING_LIFE, opp: STARTING_LIFE };
         if (!parsed.turn) parsed.turn = 1;
+        if (!parsed.side) parsed.side = "me";
+        if (!Array.isArray(parsed.log)) parsed.log = [];
         return parsed;
       }
     }
@@ -560,6 +605,7 @@ function newCreature(type) {
     pumpP: 0, pumpT: 0,       // bonus manuales (+1/+2/+3) hasta fin de turno
     role: false,              // Monster role (permanente)
     cutter: false,            // Cori-Steel Cutter equipada (permanente)
+    tapped: false,            // atacó este turno
   };
 }
 
@@ -584,7 +630,7 @@ function stats(c) {
 
 function addCreature(type) {
   const c = newCreature(type);
-  act(() => state.creatures.push(c));
+  act(() => { state.creatures.push(c); logEvent({ kind: "enter", type }); });
   const card = cardEl(c.id);
   fx(card, "fx-summon");
   burst(card, ["✨", "⭐", "✨"], 7, 60);
@@ -596,7 +642,11 @@ function removeById(id) {
   const card = cardEl(id);
   const remove = () => {
     leaving.delete(id);
-    act(() => { state.creatures = state.creatures.filter(c => c.id !== id); });
+    act(() => {
+      const gone = state.creatures.find(c => c.id === id);
+      state.creatures = state.creatures.filter(c => c.id !== id);
+      if (gone) logEvent({ kind: "leave", type: gone.type });
+    });
   };
   if (!card || !motionOK()) return remove();
   leaving.add(id);
@@ -617,6 +667,7 @@ function applyTrigger(c) {
 function castSpell() {
   act(() => {
     state.spells += 1;
+    logEvent({ kind: "spell", n: 1 });
     state.creatures.forEach(applyTrigger);
   });
   toast(`⚡ Hechizo #${state.spells}: prowess a todas`);
@@ -660,7 +711,9 @@ function pump(id, stat, amount) {
 function toggle(id, key) {
   act(() => {
     const c = state.creatures.find(x => x.id === id);
-    if (c) c[key] = !c[key];
+    if (!c) return;
+    c[key] = !c[key];
+    if (c[key]) logEvent({ kind: key, type: c.type });
   });
   const c = state.creatures.find(x => x.id === id);
   if (!c || !c[key]) return;
@@ -685,20 +738,48 @@ function toggleDelirium() {
 }
 
 function changeLife(who, delta) {
-  act(() => { state.life[who] += delta; });
+  act(() => {
+    state.life[who] += delta;
+    logEvent({ kind: "life", who, delta });
+  });
 }
 
+// Daño que podés hacer ahora: solo cuentan las criaturas sin tapear.
 function totalPower() {
-  return state.creatures.reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
+  return untapped().reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
+}
+
+function untapped() {
+  return state.creatures.filter(c => !c.tapped);
 }
 
 function attack() {
-  const dmg = totalPower();
+  attackWith(untapped().map(c => c.id));
+}
+
+// Atacan las criaturas indicadas: quedan tapeadas y su fuerza va a la vida del rival.
+function attackWith(ids) {
+  if (state.side !== "me") return;
+  const attackers = state.creatures.filter(c => ids.includes(c.id) && !c.tapped);
+  if (!attackers.length) return;
+  const dmg = attackers.reduce((sum, c) => sum + Math.max(0, stats(c).p), 0);
+  const lethal = dmg > 0 && state.life.opp > 0 && state.life.opp - dmg <= 0;
+  act(() => {
+    attackers.forEach(a => { state.creatures.find(c => c.id === a.id).tapped = true; });
+    state.life.opp -= dmg;
+    logEvent({ kind: "attack", who: "opp", delta: -dmg, types: attackers.map(a => a.type), lethal });
+  });
+  attackers.forEach(a => fx(cardEl(a.id), "fx-charge"));
   if (!dmg) return;
-  const lethal = state.life.opp > 0 && state.life.opp - dmg <= 0;
-  act(() => { state.life.opp -= dmg; });
   animateHit(dmg, lethal);
   toast(lethal ? `☠️ ¡Golpe letal! ${dmg} de daño` : `💥 ${dmg} de daño al rival`);
+}
+
+function untap(id) {
+  act(() => {
+    const c = state.creatures.find(x => x.id === id);
+    if (c) c.tapped = false;
+  });
 }
 
 // Golpe al contador del rival: leve (<5), fuerte (5-10), muy fuerte (>10) o letal (se rompe).
@@ -785,22 +866,123 @@ function disarmReset() {
   btn.textContent = "🔄 Nueva partida";
 }
 
+// Fin de tu turno → turno rival. Fin del turno rival → tu turno siguiente (enderezás todo).
+// En los dos casos se limpian los bonus "hasta el final del turno".
 function endTurn() {
+  const wasMine = state.side === "me";
   act(() => {
-    state.turn += 1;
     state.spells = 0;
     state.creatures.forEach(c => {
       c.prowessP = c.prowessT = 0;
       c.pumpP = c.pumpT = 0;
       c.triggers = 0;
     });
+    if (wasMine) {
+      state.side = "opp";
+    } else {
+      state.side = "me";
+      state.turn += 1;
+      state.creatures.forEach(c => { c.tapped = false; });
+    }
   });
-  toast(`🌙 Turno ${state.turn}: bonus temporales limpiados`);
-  state.creatures.forEach((c, i) => setTimeout(() => {
-    const card = cardEl(c.id);
-    fx(card, "fx-sleep");
-    floatText(card, "💤", { size: 1.6, duration: 1400 });
-  }, i * 90));
+  if (wasMine) {
+    toast("🌙 Fin de tu turno: juega el rival");
+    state.creatures.forEach((c, i) => setTimeout(() => {
+      const card = cardEl(c.id);
+      fx(card, "fx-sleep");
+      floatText(card, "💤", { size: 1.6, duration: 1400 });
+    }, i * 90));
+  } else {
+    toast(`☀️ Turno ${state.turn}: enderezás tus criaturas`);
+    state.creatures.forEach((c, i) => setTimeout(() => {
+      const card = cardEl(c.id);
+      fx(card, "fx-wake");
+      burst(card, ["☀️", "✨"], 5, 45);
+    }, i * 90));
+  }
+}
+
+// --- Historial ---
+
+// Agrega un evento al turno actual. Los cambios de vida seguidos del mismo signo
+// y los hechizos se juntan en una sola línea.
+function logEvent(ev) {
+  const entry = { turn: state.turn, side: state.side, ...ev };
+  const last = state.log[state.log.length - 1];
+  const sameTurn = last && last.turn === entry.turn && last.side === entry.side;
+  if (sameTurn && ev.kind === "life" && last.kind === "life" && last.who === ev.who && Math.sign(last.delta) === Math.sign(ev.delta)) {
+    last.delta += ev.delta;
+    return;
+  }
+  if (sameTurn && ev.kind === "spell" && last.kind === "spell") {
+    last.n += 1;
+    return;
+  }
+  state.log.push(entry);
+  if (state.log.length > 400) state.log.shift();
+}
+
+function eventText(ev) {
+  const short = t => CREATURES[t]?.short || t;
+  const icon = t => CREATURES[t]?.icon || "";
+  switch (ev.kind) {
+    case "life": return `${ev.who === "me" ? "❤️ Vos" : "💀 Rival"} ${ev.delta < 0 ? "−" + -ev.delta : "+" + ev.delta}`;
+    case "attack": return `⚔️ Atacan ${ev.types.map(t => icon(t) + " " + short(t)).join(", ")}: −${-ev.delta} al rival${ev.lethal ? " ☠️" : ""}`;
+    case "spell": return `⚡ ${ev.n} hechizo${ev.n > 1 ? "s" : ""} no-criatura`;
+    case "enter": return `${icon(ev.type)} Entra ${short(ev.type)}`;
+    case "leave": return `💨 Sale ${short(ev.type)}`;
+    case "role": return `👹 Role en ${short(ev.type)}`;
+    case "cutter": return `🗡️ Cori-Steel en ${short(ev.type)}`;
+    default: return "";
+  }
+}
+
+function lifeSummary(events) {
+  const lost = { me: 0, opp: 0 };
+  events.forEach(ev => {
+    if ((ev.kind === "life" || ev.kind === "attack") && ev.delta < 0) lost[ev.who] += -ev.delta;
+  });
+  return lost;
+}
+
+// Recuerda qué turnos abrió o cerró el usuario, para que no se cierren en cada re-render.
+const turnOpen = new Map();
+
+function renderHistory() {
+  // Agrupa por turno (tuyo / rival), del más nuevo al más viejo; el turno actual siempre aparece.
+  const groups = [];
+  const key = (t, s) => `${t}-${s}`;
+  const byKey = new Map();
+  const ensure = (turn, side) => {
+    const k = key(turn, side);
+    if (!byKey.has(k)) { const g = { turn, side, events: [] }; byKey.set(k, g); groups.push(g); }
+    return byKey.get(k);
+  };
+  state.log.forEach(ev => ensure(ev.turn, ev.side).events.push(ev));
+  ensure(state.turn, state.side);
+  groups.sort((a, b) => b.turn - a.turn || (a.side === "opp" ? -1 : 1));
+
+  document.getElementById("history").replaceChildren(...groups.map(g => {
+    const current = g.turn === state.turn && g.side === state.side;
+    const lost = lifeSummary(g.events);
+    const tags = [];
+    if (lost.opp) tags.push(el("span", { class: "tag opp" }, `💀 −${lost.opp}`));
+    if (lost.me) tags.push(el("span", { class: "tag me" }, `❤️ −${lost.me}`));
+    if (!tags.length) tags.push(el("span", { class: "tag" }, "sin daño"));
+    const k = key(g.turn, g.side);
+    const details = el("details", { class: "turn-log" + (current ? " current" : ""), open: turnOpen.get(k) ?? current }, [
+      el("summary", {}, [
+        el("span", { class: "turn-name side-" + g.side }, `T${g.turn} · ${g.side === "me" ? "Tu turno" : "Rival"}${current ? " (ahora)" : ""}`),
+        el("span", { class: "tags" }, tags),
+      ]),
+      g.events.length
+        ? el("ul", {}, g.events.map(ev => el("li", {}, eventText(ev))))
+        : el("p", { class: "muted" }, "Todavía no pasó nada."),
+    ]);
+    // Solo cuenta el click del usuario (el atributo "open" inicial también dispara "toggle").
+    details.querySelector("summary").addEventListener("click", () => turnOpen.set(k, !details.open));
+    return details;
+  }));
 }
 
 // --- Animaciones ---
@@ -962,7 +1144,7 @@ function renderCard(c) {
     ...[3, 2, 1].map(n => el("button", { onclick: () => pump(c.id, stat, n) }, `+${n}`)),
   ]);
 
-  return el("div", { class: "card", "data-id": c.id, style: `--accent:${def.accent}` }, [
+  return el("div", { class: "card" + (c.tapped ? " tapped" : ""), "data-id": c.id, style: `--accent:${def.accent}` }, [
     el("div", { class: "card-top" }, [
       art[type]
         ? el("button", { class: "art", onclick: () => showCard(type), "aria-label": `Ver carta de ${def.name}` }, artContent(type))
@@ -989,6 +1171,9 @@ function renderCard(c) {
       el("button", { class: "toggle" + (c.cutter ? " on" : ""), onclick: () => toggle(c.id, "cutter") },
         c.cutter ? "🗡️ Cori ✓" : "🗡️ Cori"),
     ]),
+    c.tapped
+      ? el("button", { class: "btn-tap tapped", onclick: () => untap(c.id), title: "Enderezar sin deshacer el daño" }, "↪️ TAPEADA")
+      : el("button", { class: "btn-tap", onclick: () => attackWith([c.id]), disabled: state.side !== "me" }, `⚔️ Atacar (${Math.max(0, s.p)})`),
   ]);
 }
 
@@ -1001,12 +1186,21 @@ function render() {
     field.replaceChildren(...state.creatures.map(renderCard));
   }
   document.getElementById("turnCount").textContent = state.turn;
+  const side = document.getElementById("turnSide");
+  side.textContent = state.side === "me" ? "Tu turno" : "Turno rival";
+  side.className = "side-" + state.side;
+  const eot = document.getElementById("endTurn");
+  eot.textContent = state.side === "me" ? "🌙 Fin de turno" : "☀️ Fin turno rival";
+  eot.classList.toggle("opp", state.side === "opp");
   document.getElementById("spellCount").textContent = state.spells;
   const power = totalPower();
   document.getElementById("totalPower").textContent = power;
   const attackBtn = document.getElementById("attack");
-  attackBtn.textContent = `💥 Pegar con todo: −${power} al rival`;
-  attackBtn.disabled = power === 0;
+  const ready = untapped().length;
+  attackBtn.textContent = state.side !== "me" ? "⏳ Turno rival: no podés atacar"
+    : ready ? `💥 Atacar con todo: −${power} al rival` : "💤 Todas tapeadas";
+  attackBtn.disabled = state.side !== "me" || ready === 0;
+  renderHistory();
   for (const [who, id] of [["me", "lifeMe"], ["opp", "lifeOpp"]]) {
     const node = document.getElementById(id);
     node.textContent = state.life[who];
