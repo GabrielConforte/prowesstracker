@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14161c">
 <title>Prowess Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Prowess">
 <style>
   :root {
     --bg: #14161c;
@@ -145,7 +152,8 @@
     <h1>⚡🔥 Prowess Tracker</h1>
   </div>
   <div class="stats-row">
-    <span>📜 Hechizos este turno: <b id="spellCount">0</b></span>
+    <span>⏳ Turno <b id="turnCount">1</b></span>
+    <span>📜 Hechizos: <b id="spellCount">0</b></span>
     <span>💥 Daño total: <b id="totalPower">0</b></span>
   </div>
   <div class="life">
@@ -247,7 +255,7 @@ let history = [];
 let nextId = state.nextId || 1;
 
 function freshState() {
-  return { creatures: [], spells: 0, delirium: false, life: { me: STARTING_LIFE, opp: STARTING_LIFE }, nextId: 1 };
+  return { creatures: [], spells: 0, turn: 1, delirium: false, life: { me: STARTING_LIFE, opp: STARTING_LIFE }, nextId: 1 };
 }
 
 function loadState() {
@@ -257,6 +265,7 @@ function loadState() {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.creatures)) {
         if (!parsed.life) parsed.life = { me: STARTING_LIFE, opp: STARTING_LIFE };
+        if (!parsed.turn) parsed.turn = 1;
         return parsed;
       }
     }
@@ -416,6 +425,7 @@ function disarmReset() {
 
 function endTurn() {
   act(() => {
+    state.turn += 1;
     state.spells = 0;
     state.creatures.forEach(c => {
       c.prowessP = c.prowessT = 0;
@@ -423,7 +433,7 @@ function endTurn() {
       c.triggers = 0;
     });
   });
-  toast("🌙 Fin de turno: bonus temporales limpiados");
+  toast(`🌙 Turno ${state.turn}: bonus temporales limpiados`);
 }
 
 // --- Render ---
@@ -519,6 +529,7 @@ function render() {
   } else {
     field.replaceChildren(...state.creatures.map(renderCard));
   }
+  document.getElementById("turnCount").textContent = state.turn;
   document.getElementById("spellCount").textContent = state.spells;
   const power = totalPower();
   document.getElementById("totalPower").textContent = power;
