@@ -26,6 +26,7 @@ Abrí `index.html` en el navegador (ideal en el celular). No necesita instalaci�
 - **💥 Pegar con todo**: resta al rival la fuerza total de tus criaturas. El contador del rival reacciona según el golpe: leve (menos de 5), se sacude (5 a 10), se sacude fuerte (más de 10) o se rompe si es letal.
 - **🔄 Nueva partida**: reinicia vidas y campo (tocá dos veces para confirmar).
 - **↶**: deshacer.
+- **🔊 / 🔇**: sonidos (sintetizados en el navegador, sin archivos). La elección queda guardada.
 - **Imágenes**: la app busca en [Scryfall](https://scryfall.com) la ilustración de cada criatura (la del Monk sale de la ficha que crea Cori-Steel Cutter) y la guarda en el navegador por 30 días. Tocá la imagen de una carta en el campo para verla completa. Sin conexión se ven los emojis.
 
 El estado se guarda en el navegador.

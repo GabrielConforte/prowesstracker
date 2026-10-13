@@ -57,6 +57,8 @@
   }
   .stats-row { display: flex; gap: 14px; color: var(--muted); font-size: 0.85rem; }
   .stats-row b { color: var(--text); }
+  .stats-row { align-items: center; }
+  .btn-sound { margin-left: auto; background: var(--panel-2); padding: 3px 8px; font-size: 0.9rem; line-height: 1.2; }
   .life { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   .life-box { background: var(--panel); border-radius: 12px; padding: 6px 8px; box-shadow: inset 0 0 0 1px var(--life-c); }
   .life-box.me { --life-c: #166534; }
@@ -362,6 +364,7 @@
     <span>⏳ Turno <b id="turnCount">1</b> · <b id="turnSide" class="side-me">Tu turno</b></span>
     <span>📜 Hechizos: <b id="spellCount">0</b></span>
     <span>💥 Daño: <b id="totalPower">0</b></span>
+    <button class="btn-sound" id="sound" aria-label="Sonido">🔊</button>
   </div>
   <div class="life">
     <div class="life-box me">
@@ -593,6 +596,7 @@ function undo() {
   nextId = Math.max(nextId, state.nextId || 1);
   saveState();
   render();
+  sfx.undo();
   toast("↶ Deshecho");
 }
 
@@ -633,6 +637,7 @@ function addCreature(type) {
   act(() => { state.creatures.push(c); logEvent({ kind: "enter", type }); });
   const card = cardEl(c.id);
   fx(card, "fx-summon");
+  sfx.summon();
   burst(card, ["✨", "⭐", "✨"], 7, 60);
 }
 
@@ -650,6 +655,7 @@ function removeById(id) {
   };
   if (!card || !motionOK()) return remove();
   leaving.add(id);
+  sfx.poof();
   burst(card, ["💨", "☁️", "💨"], 6, 50);
   card.style.pointerEvents = "none";
   card.classList.add("fx-poof");
@@ -672,6 +678,7 @@ function castSpell() {
   });
   toast(`⚡ Hechizo #${state.spells}: prowess a todas`);
   burst(document.getElementById("castSpell"), ["⚡", "🔥", "✨", "⚡"], 10, 90);
+  sfx.zap(state.creatures.filter(c => CREATURES[c.type].trigger).length);
   state.creatures.forEach(c => celebrateTrigger(c));
 }
 
@@ -694,7 +701,7 @@ function prowessOne(id) {
     if (c) applyTrigger(c);
   });
   const c = state.creatures.find(x => x.id === id);
-  if (c) celebrateTrigger(c);
+  if (c) { celebrateTrigger(c); sfx.zap(CREATURES[c.type].trigger ? 1 : 0); }
 }
 
 function pump(id, stat, amount) {
@@ -704,6 +711,7 @@ function pump(id, stat, amount) {
     if (stat === "p") c.pumpP += amount; else c.pumpT += amount;
   });
   const card = cardEl(id);
+  sfx.pump(amount);
   fx(card?.querySelector(".pt"), "fx-pump");
   floatText(card, `${stat === "p" ? "⚔️" : "🛡️"} +${amount}`, { color: stat === "p" ? "var(--red)" : "var(--blue)" });
 }
@@ -720,15 +728,18 @@ function toggle(id, key) {
   const card = cardEl(id);
   if (key === "role") {
     stamp(card, "👹");
+    sfx.stamp();
     setTimeout(() => fx(card, "fx-clank"), 330);
   } else {
     flyIn(card, "🗡️");
+    sfx.sword();
     setTimeout(() => { fx(card, "fx-clank"); burst(card, ["✨", "💥"], 5, 40); }, 420);
   }
 }
 
 function toggleDelirium() {
   act(() => { state.delirium = !state.delirium; });
+  if (state.delirium) sfx.warble();
   if (!state.delirium) return;
   state.creatures.filter(c => c.type === "drc").forEach(c => {
     const card = cardEl(c.id);
@@ -742,6 +753,7 @@ function changeLife(who, delta) {
     state.life[who] += delta;
     logEvent({ kind: "life", who, delta });
   });
+  sfx.blip(delta);
 }
 
 // Daño que podés hacer ahora: solo cuentan las criaturas sin tapear.
@@ -770,6 +782,7 @@ function attackWith(ids) {
     logEvent({ kind: "attack", who: "opp", delta: -dmg, types: attackers.map(a => a.type), lethal });
   });
   attackers.forEach(a => fx(cardEl(a.id), "fx-charge"));
+  sfx.whoosh();
   if (!dmg) return;
   animateHit(dmg, lethal);
   toast(lethal ? `☠️ ¡Golpe letal! ${dmg} de daño` : `💥 ${dmg} de daño al rival`);
@@ -799,6 +812,7 @@ function animateHit(dmg, lethal) {
   box.append(pop);
   setTimeout(() => pop.remove(), 1100);
 
+  sfx.hit(lethal ? "lethal" : tier);
   if (lethal && !reducedMotion.matches) {
     setTimeout(() => shatter(box), 450);
     setTimeout(() => rain(["💀", "🎉", "⚰️", "🎊", "🔥"], 36), 900);
@@ -856,6 +870,7 @@ function newGame() {
     fresh.nextId = nextId;
     state = fresh;
   });
+  sfx.fanfare();
   toast("🔄 Nueva partida");
 }
 
@@ -886,6 +901,7 @@ function endTurn() {
     }
   });
   if (wasMine) {
+    sfx.lullaby();
     toast("🌙 Fin de tu turno: juega el rival");
     state.creatures.forEach((c, i) => setTimeout(() => {
       const card = cardEl(c.id);
@@ -893,6 +909,7 @@ function endTurn() {
       floatText(card, "💤", { size: 1.6, duration: 1400 });
     }, i * 90));
   } else {
+    sfx.rooster();
     toast(`☀️ Turno ${state.turn}: enderezás tus criaturas`);
     state.creatures.forEach((c, i) => setTimeout(() => {
       const card = cardEl(c.id);
@@ -983,6 +1000,182 @@ function renderHistory() {
     details.querySelector("summary").addEventListener("click", () => turnOpen.set(k, !details.open));
     return details;
   }));
+}
+
+// --- Sonidos ---
+// Todo se sintetiza con Web Audio, sin archivos. Solo suenan después de un toque del usuario.
+
+const SOUND_KEY = "prowess-tracker-sound";
+let soundOn = (() => { try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch (e) { return true; } })();
+let audioCtx, master;
+
+function audio() {
+  if (!soundOn) return null;
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      master = audioCtx.createGain();
+      master.gain.value = 0.35;
+      master.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Una nota: frecuencia que puede deslizarse (from → to), con ataque y caída cortos.
+function tone({ freq, to, type = "sine", dur = 0.15, vol = 0.5, delay = 0, vibrato = 0 }) {
+  const ctx = audio();
+  if (!ctx) return;
+  const t = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t);
+  if (to) osc.frequency.exponentialRampToValueAtTime(to, t + dur);
+  if (vibrato) {
+    const lfo = ctx.createOscillator();
+    const depth = ctx.createGain();
+    lfo.frequency.value = vibrato;
+    depth.gain.value = freq * 0.06;
+    lfo.connect(depth).connect(osc.frequency);
+    lfo.start(t);
+    lfo.stop(t + dur);
+  }
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + dur + 0.02);
+}
+
+// Ruido filtrado: golpes, soplidos, explosiones.
+function noise({ dur = 0.2, vol = 0.5, delay = 0, freq = 1000, to, filter = "lowpass", q = 1 }) {
+  const ctx = audio();
+  if (!ctx) return;
+  const t = ctx.currentTime + delay;
+  const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const f = ctx.createBiquadFilter();
+  f.type = filter;
+  f.Q.value = q;
+  f.frequency.setValueAtTime(freq, t);
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + dur);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f).connect(gain).connect(master);
+  src.start(t);
+}
+
+const sfx = {
+  // Criatura que entra: "bloop" que sube.
+  summon() {
+    tone({ freq: 220, to: 660, type: "triangle", dur: 0.18, vol: 0.4 });
+    tone({ freq: 880, to: 1320, type: "sine", dur: 0.12, vol: 0.2, delay: 0.12 });
+  },
+  // Criatura que sale: soplido que baja.
+  poof() {
+    noise({ dur: 0.35, vol: 0.5, freq: 3000, to: 200, filter: "bandpass", q: 2 });
+    tone({ freq: 500, to: 120, type: "sine", dur: 0.3, vol: 0.25 });
+  },
+  // Prowess: zap eléctrico; más criaturas, más chispas. 0 = DRC sola ("¿eh?").
+  zap(n = 1) {
+    if (n === 0) {
+      tone({ freq: 330, to: 300, type: "square", dur: 0.12, vol: 0.12 });
+      tone({ freq: 300, to: 420, type: "square", dur: 0.18, vol: 0.12, delay: 0.14 });
+      return;
+    }
+    tone({ freq: 1800, to: 200, type: "sawtooth", dur: 0.18, vol: 0.18 });
+    for (let i = 0; i < Math.min(n, 4); i++) {
+      tone({ freq: 600 + i * 200, to: 1600 + i * 300, type: "square", dur: 0.09, vol: 0.08, delay: 0.08 + i * 0.06 });
+    }
+  },
+  // Pump: "pop" más agudo cuanto más grande.
+  pump(amount) {
+    tone({ freq: 300 + amount * 150, to: 600 + amount * 250, type: "sine", dur: 0.1, vol: 0.4 });
+  },
+  // Monster role: golpe de sello.
+  stamp() {
+    noise({ dur: 0.15, vol: 0.7, freq: 400, to: 80, delay: 0.3 });
+    tone({ freq: 140, to: 50, type: "sine", dur: 0.25, vol: 0.7, delay: 0.3 });
+  },
+  // Cori-Steel: espada que vuela y se clava.
+  sword() {
+    noise({ dur: 0.4, vol: 0.25, freq: 800, to: 5000, filter: "bandpass", q: 4 });
+    tone({ freq: 2600, type: "triangle", dur: 0.5, vol: 0.18, delay: 0.42 });
+    tone({ freq: 3900, type: "sine", dur: 0.4, vol: 0.1, delay: 0.42 });
+  },
+  // Delirium: sonido mareado.
+  warble() {
+    tone({ freq: 400, to: 200, type: "triangle", dur: 0.7, vol: 0.35, vibrato: 9 });
+    tone({ freq: 600, to: 300, type: "sine", dur: 0.7, vol: 0.15, vibrato: 7, delay: 0.05 });
+  },
+  // Ataque: soplido de embestida.
+  whoosh() {
+    noise({ dur: 0.3, vol: 0.4, freq: 300, to: 2500, filter: "bandpass", q: 1.5 });
+  },
+  // Golpe al rival según la fuerza; letal = explosión + trombón triste.
+  hit(tier) {
+    if (tier === "hit-light") {
+      noise({ dur: 0.08, vol: 0.4, freq: 1200, delay: 0.05 });
+      return;
+    }
+    if (tier === "hit-medium") {
+      noise({ dur: 0.18, vol: 0.6, freq: 700, to: 150, delay: 0.05 });
+      tone({ freq: 160, to: 70, dur: 0.2, vol: 0.5, delay: 0.05 });
+      return;
+    }
+    noise({ dur: 0.5, vol: 0.9, freq: 1200, to: 60, delay: 0.05 });
+    tone({ freq: 110, to: 35, dur: 0.6, vol: 0.8, delay: 0.05 });
+    if (tier === "lethal") {
+      noise({ dur: 0.6, vol: 0.5, freq: 6000, to: 1500, filter: "highpass", delay: 0.45 });
+      [392, 370, 349, 330].forEach((f, i) => {
+        const last = i === 3;
+        tone({ freq: f, to: last ? f * 0.94 : undefined, type: "sawtooth", dur: last ? 0.9 : 0.32, vol: 0.13, delay: 1.0 + i * 0.36, vibrato: last ? 6 : 0 });
+      });
+    }
+  },
+  // Cambios de vida: tic agudo si sube, grave si baja.
+  blip(delta) {
+    tone({ freq: delta > 0 ? 880 : 300, type: "square", dur: 0.05, vol: 0.12 });
+  },
+  // Fin de tu turno: canción de cuna que baja.
+  lullaby() {
+    [659, 523, 440, 330].forEach((f, i) => tone({ freq: f, type: "sine", dur: 0.28, vol: 0.25, delay: i * 0.16 }));
+  },
+  // Empieza tu turno: arpegio que sube, como un gallo.
+  rooster() {
+    [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, type: "triangle", dur: 0.16, vol: 0.25, delay: i * 0.08 }));
+    tone({ freq: 1047, to: 1400, type: "square", dur: 0.25, vol: 0.08, delay: 0.34, vibrato: 12 });
+  },
+  undo() {
+    tone({ freq: 900, to: 300, type: "triangle", dur: 0.15, vol: 0.25 });
+  },
+  fanfare() {
+    [523, 659, 784].forEach((f, i) => tone({ freq: f, type: "triangle", dur: 0.14, vol: 0.25, delay: i * 0.1 }));
+    tone({ freq: 1047, type: "triangle", dur: 0.4, vol: 0.3, delay: 0.3 });
+  },
+};
+
+function renderSoundButton() {
+  const btn = document.getElementById("sound");
+  btn.textContent = soundOn ? "🔊" : "🔇";
+  btn.setAttribute("aria-label", soundOn ? "Silenciar" : "Activar sonido");
+  btn.setAttribute("aria-pressed", String(!soundOn));
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch (e) { /* ignorar */ }
+  renderSoundButton();
+  if (soundOn) tone({ freq: 660, to: 990, type: "triangle", dur: 0.12, vol: 0.3 });
 }
 
 // --- Animaciones ---
@@ -1220,6 +1413,8 @@ function toast(msg) {
 }
 
 document.getElementById("castSpell").addEventListener("click", castSpell);
+document.getElementById("sound").addEventListener("click", toggleSound);
+renderSoundButton();
 document.getElementById("undo").addEventListener("click", undo);
 document.getElementById("endTurn").addEventListener("click", endTurn);
 document.getElementById("attack").addEventListener("click", attack);
